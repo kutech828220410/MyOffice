@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyOffice", "MyOfficeUI\MyOffice.csproj", "{78748D43-AE0C-42FC-9FC5-317AB8E9DF0B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Form_Test", "Form_Test\Form_Test.csproj", "{B0DB8E90-C8B2-4B36-A8CD-199AE550C1CE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{78748D43-AE0C-42FC-9FC5-317AB8E9DF0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78748D43-AE0C-42FC-9FC5-317AB8E9DF0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78748D43-AE0C-42FC-9FC5-317AB8E9DF0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78748D43-AE0C-42FC-9FC5-317AB8E9DF0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0DB8E90-C8B2-4B36-A8CD-199AE550C1CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0DB8E90-C8B2-4B36-A8CD-199AE550C1CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0DB8E90-C8B2-4B36-A8CD-199AE550C1CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0DB8E90-C8B2-4B36-A8CD-199AE550C1CE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
