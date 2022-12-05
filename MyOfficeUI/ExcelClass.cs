@@ -46,7 +46,15 @@ namespace MyOffice
 
         public static void SaveFile(System.Data.DataTable dataTable, string filepath)
         {
-            SaveFile(dataTable, filepath, new int[] { });
+            try
+            {
+                SaveFile(dataTable, filepath, new int[] { });
+            }
+            catch
+            {
+                Console.WriteLine("找不到Excel安裝資訊!");
+            }
+    
         }
         public static void SaveFile(System.Data.DataTable dataTable, string filepath ,int[] ColunmWidth )
         {
