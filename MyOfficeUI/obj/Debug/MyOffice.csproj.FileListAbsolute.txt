@@ -1,0 +1,12 @@
+C:\Users\hsonds01\Source\Repos\MyOffice\MyOfficeUI\bin\Debug\MyOffice.dll
+C:\Users\hsonds01\Source\Repos\MyOffice\MyOfficeUI\bin\Debug\MyOffice.pdb
+C:\Users\hsonds01\Source\Repos\MyOffice\MyOfficeUI\bin\Debug\Microsoft.CSharp.dll
+C:\Users\hsonds01\Source\Repos\MyOffice\MyOfficeUI\bin\Debug\Office.dll
+C:\Users\hsonds01\Source\Repos\MyOffice\MyOfficeUI\bin\Debug\Microsoft.Office.Interop.Excel.dll
+C:\Users\hsonds01\Source\Repos\MyOffice\MyOfficeUI\bin\Debug\Microsoft.Office.Interop.Word.dll
+C:\Users\hsonds01\Source\Repos\MyOffice\MyOfficeUI\obj\Debug\MyOffice.csproj.AssemblyReference.cache
+C:\Users\hsonds01\Source\Repos\MyOffice\MyOfficeUI\obj\Debug\MyOffice.csproj.ResolveComReference.cache
+C:\Users\hsonds01\Source\Repos\MyOffice\MyOfficeUI\obj\Debug\MyOffice.csproj.CoreCompileInputs.cache
+C:\Users\hsonds01\Source\Repos\MyOffice\MyOfficeUI\obj\Debug\MyOffice.csproj.CopyComplete
+C:\Users\hsonds01\Source\Repos\MyOffice\MyOfficeUI\obj\Debug\MyOffice.dll
+C:\Users\hsonds01\Source\Repos\MyOffice\MyOfficeUI\obj\Debug\MyOffice.pdb
