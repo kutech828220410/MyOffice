@@ -22,12 +22,16 @@ namespace MyOffice
     [Serializable]
     public class SheetClass
     {
-        List<CellValue> cellValues = new List<CellValue>();
-
-        public List<CellValue> CellValues { get => cellValues; set => cellValues = value; }
-
         public List<ICellStyle> cellStyles = new List<ICellStyle>();
 
+        private List<CellValue> cellValues = new List<CellValue>();
+        private List<MyCellStyle> myCellStyles = new List<MyCellStyle>();
+        private List<int> columnsWidth = new List<int>();
+
+
+        public List<CellValue> CellValues { get => cellValues; set => cellValues = value; }
+        public List<MyCellStyle> MyCellStyles { get => myCellStyles; set => myCellStyles = value; }
+        public List<int> ColumnsWidth { get => columnsWidth; set => columnsWidth = value; }
 
         public bool Add(CellValue cellValue)
         {
@@ -45,10 +49,72 @@ namespace MyOffice
             }
             return false;
         }
-        public void Init()
+        public int Add(MyCellStyle myCellStyle)
         {
-            HSSFWorkbook workbook = new NPOI.HSSF.UserModel.HSSFWorkbook();
+            for (int i = 0; i < MyCellStyles.Count; i++)
+            {
+                bool flag_ok = true;
+                if (myCellStyle.VerticalAlignment != MyCellStyles[i].VerticalAlignment) flag_ok = false;
+                if (myCellStyle.Alignment != MyCellStyles[i].Alignment) flag_ok = false;
+                if (myCellStyle.BorderTop != MyCellStyles[i].BorderTop) flag_ok = false;
+                if (myCellStyle.BorderBottom != MyCellStyles[i].BorderBottom) flag_ok = false;
+                if (myCellStyle.BorderLeft != MyCellStyles[i].BorderLeft) flag_ok = false;
+                if (myCellStyle.BorderRight != MyCellStyles[i].BorderRight) flag_ok = false;
 
+
+                if (myCellStyle.FontName != MyCellStyles[i].FontName) flag_ok = false;
+                if (myCellStyle.FontHeight != MyCellStyles[i].FontHeight) flag_ok = false;
+                if (myCellStyle.FontHeightInPoints != MyCellStyles[i].FontHeightInPoints) flag_ok = false;
+                if (myCellStyle.IsItalic != MyCellStyles[i].IsItalic) flag_ok = false;
+                if (myCellStyle.IsStrikeout != MyCellStyles[i].IsStrikeout) flag_ok = false;
+                if (myCellStyle.Color != MyCellStyles[i].Color) flag_ok = false;
+                if (myCellStyle.TypeOffset != MyCellStyles[i].TypeOffset) flag_ok = false;
+                if (myCellStyle.Underline != MyCellStyles[i].Underline) flag_ok = false;
+                if (myCellStyle.Charset != MyCellStyles[i].Charset) flag_ok = false;
+                if (myCellStyle.Index != MyCellStyles[i].Index) flag_ok = false;
+                if (myCellStyle.Boldweight != MyCellStyles[i].Boldweight) flag_ok = false;
+                if (myCellStyle.IsBold != MyCellStyles[i].IsBold) flag_ok = false;
+                if(flag_ok)
+                {
+                    return i;
+                }
+            }
+            MyCellStyles.Add(myCellStyle);
+            return MyCellStyles.Count - 1;
+        }
+        public void Init(NPOI.SS.UserModel.IWorkbook workbook)
+        {
+            for (int i = 0; i < MyCellStyles.Count; i++)
+            {
+                ICellStyle cellStyle = workbook.CreateCellStyle();
+
+                cellStyle.Alignment = MyCellStyles[i].Alignment;
+                cellStyle.VerticalAlignment = MyCellStyles[i].VerticalAlignment;
+                cellStyle.BorderTop = MyCellStyles[i].BorderTop;
+                cellStyle.BorderBottom = MyCellStyles[i].BorderBottom;
+                cellStyle.BorderLeft = MyCellStyles[i].BorderLeft;
+                cellStyle.BorderRight = MyCellStyles[i].BorderRight;
+
+                IFont myFont = workbook.CreateFont();
+                myFont.FontName = MyCellStyles[i].FontName;
+                myFont.FontHeight = MyCellStyles[i].FontHeight;
+                myFont.FontHeightInPoints = MyCellStyles[i].FontHeightInPoints;
+                myFont.IsItalic = MyCellStyles[i].IsItalic;
+                myFont.IsStrikeout = MyCellStyles[i].IsStrikeout;
+                myFont.Color = MyCellStyles[i].Color;
+                myFont.TypeOffset = MyCellStyles[i].TypeOffset;
+                myFont.Underline = MyCellStyles[i].Underline;
+                myFont.Charset = MyCellStyles[i].Charset;
+                myFont.Boldweight = MyCellStyles[i].Boldweight;
+                myFont.IsBold = MyCellStyles[i].IsBold;
+
+                cellStyle.SetFont(myFont);
+                cellStyles.Add(cellStyle);
+            }
+        }
+        public ICellStyle GetICellStyle(int index)
+        {
+            return cellStyles[index];
         }
     }
     [Serializable]
@@ -111,35 +177,35 @@ namespace MyOffice
             }
         }
         
+      
+
         private string text = "";
         private int rowStart = 0;
         private int rowEnd = 0;
         private int colStart = 0;
         private int colEnd = 0;
 
-        private MyFont font;
-        private MyCellStyle cellStyle;
+        private int cellStyle_index;
         public string Text { get => text; set => text = value; }
         public int RowStart { get => rowStart; set => rowStart = value; }
         public int RowEnd { get => rowEnd; set => rowEnd = value; }
         public int ColStart { get => colStart; set => colStart = value; }
         public int ColEnd { get => colEnd; set => colEnd = value; }
-        public MyFont Font { get => font; set => font = value; }
-        public MyCellStyle CellStyle { get => cellStyle; set => cellStyle = value; }
+        public int CellStyle_index { get => cellStyle_index; set => cellStyle_index = value; }
 
-
- 
-        public static ICellStyle ToICellStytle(NPOI.SS.UserModel.IWorkbook workbook, MyCellStyle myCellStyle, MyFont font)
-        {
-            ICellStyle cellStyle = MyCellStyle.ToICellStyle(workbook, myCellStyle);
-            cellStyle.SetFont(MyFont.ToIFont(workbook, font));
-            return cellStyle;
-            
-        }
+      
     }
+   
     [Serializable]
-    public class MyFont
+    public class MyCellStyle
     {
+        public VerticalAlignment VerticalAlignment { get; set; }
+        public HorizontalAlignment Alignment { get; set; }
+        public BorderStyle BorderBottom { get; set; }
+        public BorderStyle BorderTop { get; set; }
+        public BorderStyle BorderRight { get; set; }
+        public BorderStyle BorderLeft { get; set; }
+        //Font
         public string FontName { get; set; }
         public double FontHeight { get; set; }
         public double FontHeightInPoints { get; set; }
@@ -152,153 +218,33 @@ namespace MyOffice
         public short Index { get; set; }
         public short Boldweight { get; set; }
         public bool IsBold { get; set; }
-
-        public static MyFont ToMyFont(IFont font)
-        {
-            MyFont myFont = new MyFont();
-            myFont.FontName = font.FontName;
-            myFont.FontHeight = font.FontHeight;
-            myFont.FontHeightInPoints = font.FontHeightInPoints;
-            myFont.IsItalic = font.IsItalic;
-            myFont.IsStrikeout = font.IsStrikeout;
-            myFont.Color = font.Color;
-            myFont.TypeOffset = font.TypeOffset;
-            myFont.Underline = font.Underline;
-            myFont.Charset = font.Charset;
-            myFont.Index = font.Index;
-            myFont.Boldweight = font.Boldweight;
-            myFont.IsBold = font.IsBold;
-
-            return myFont;
-        }
-        public static IFont ToIFont(NPOI.SS.UserModel.IWorkbook workbook ,MyFont font)
-        {
-            IFont Ifont = workbook.FindFont(font.Boldweight, font.Color, (short)font.FontHeight, font.FontName, font.IsItalic, font.IsStrikeout, font.TypeOffset, font.Underline);
-            if (Ifont != null) return Ifont;
-
-
-
-            IFont myFont = workbook.CreateFont();
-            myFont.FontName = font.FontName;
-            myFont.FontHeight = font.FontHeight;
-            myFont.FontHeightInPoints = font.FontHeightInPoints;
-            myFont.IsItalic = font.IsItalic;
-            myFont.IsStrikeout = font.IsStrikeout;
-            myFont.Color = font.Color;
-            myFont.TypeOffset = font.TypeOffset;
-            myFont.Underline = font.Underline;
-            myFont.Charset = font.Charset;
-            myFont.Boldweight = font.Boldweight;
-            myFont.IsBold = font.IsBold;
-
-            return myFont;
-        }
-     
-    }
-    [Serializable]
-    public class MyCellStyle
-    {
-        public BorderStyle BorderLeft { get; set; }
-        public BorderDiagonal BorderDiagonal { get; set; }
-        public BorderStyle BorderDiagonalLineStyle { get; set; }
-        public short BorderDiagonalColor { get; set; }
-        public short FillForegroundColor { get; set; }
-        public short FillBackgroundColor { get; set; }
-        public FillPattern FillPattern { get; set; }
-        public short BottomBorderColor { get; set; }
-        public short TopBorderColor { get; set; }
-        public short RightBorderColor { get; set; }
-        public short LeftBorderColor { get; set; }
-        public BorderStyle BorderBottom { get; set; }
-        public BorderStyle BorderTop { get; set; }
-        public BorderStyle BorderRight { get; set; }
-        //public IColor FillBackgroundColorColor { get; set; }
-        //public IColor FillForegroundColorColor { get; set; }
-        public short Rotation { get; set; }
-        public VerticalAlignment VerticalAlignment { get; set; }
-        public bool WrapText { get; set; }
-        public HorizontalAlignment Alignment { get; set; }
-        public bool IsLocked { get; set; }
-        public bool IsHidden { get; set; }
-        public short FontIndex { get; set; }
-        public short DataFormat { get; set; }
-        public short Index { get; set; }
-        public bool ShrinkToFit { get; set; }
-        public short Indention { get; set; }
-        public static MyCellStyle ToMyCellStyle(ICellStyle cellStyle)
+        public static MyCellStyle ToMyCellStyle(NPOI.SS.UserModel.IWorkbook workbook ,ICellStyle cellStyle)
         {
             MyCellStyle myCellStyle = new MyCellStyle();
-            myCellStyle.BorderLeft = cellStyle.BorderLeft;
-            myCellStyle.BorderDiagonal = cellStyle.BorderDiagonal;
-            myCellStyle.BorderDiagonalLineStyle = cellStyle.BorderDiagonalLineStyle;
-            myCellStyle.BorderDiagonalColor = cellStyle.BorderDiagonalColor;
-            myCellStyle.FillForegroundColor = cellStyle.FillForegroundColor;
-            myCellStyle.FillBackgroundColor = cellStyle.FillBackgroundColor;
-            myCellStyle.FillPattern = cellStyle.FillPattern;
-            myCellStyle.BottomBorderColor = cellStyle.BottomBorderColor;
-            myCellStyle.TopBorderColor = cellStyle.TopBorderColor;
-            myCellStyle.RightBorderColor = cellStyle.RightBorderColor;
-            myCellStyle.LeftBorderColor = cellStyle.LeftBorderColor;
+
+            myCellStyle.VerticalAlignment = cellStyle.VerticalAlignment;
+            myCellStyle.Alignment = cellStyle.Alignment;
             myCellStyle.BorderBottom = cellStyle.BorderBottom;
             myCellStyle.BorderTop = cellStyle.BorderTop;
             myCellStyle.BorderRight = cellStyle.BorderRight;
-            //myCellStyle.FillBackgroundColorColor = cellStyle.FillBackgroundColorColor;
-            //myCellStyle.FillForegroundColorColor = cellStyle.FillForegroundColorColor;
-            myCellStyle.Rotation = cellStyle.Rotation;
-            myCellStyle.VerticalAlignment = cellStyle.VerticalAlignment;
-            myCellStyle.WrapText = cellStyle.WrapText;
-            myCellStyle.Alignment = cellStyle.Alignment;
-            myCellStyle.IsLocked = cellStyle.IsLocked;
-            myCellStyle.IsHidden = cellStyle.IsHidden;
-            myCellStyle.FontIndex = cellStyle.FontIndex;
-            myCellStyle.DataFormat = cellStyle.DataFormat;
-            myCellStyle.Index = cellStyle.Index;
-            myCellStyle.ShrinkToFit = cellStyle.ShrinkToFit;
-            myCellStyle.Indention = cellStyle.Indention;
-
-            return myCellStyle;
-        }
-        public static ICellStyle ToICellStyle(NPOI.SS.UserModel.IWorkbook workbook, MyCellStyle cellStyle)
-        {
-            //for (short i = 0; i < workbook.NumCellStyles; i++)
-            //{
-            //    ICellStyle myCellStyle_buf = workbook.GetCellStyleAt(i);
-            //    bool flag_ok = true;
-            //    if (myCellStyle_buf.Alignment != cellStyle.Alignment) flag_ok = false;
-            //    if (myCellStyle_buf.VerticalAlignment != cellStyle.VerticalAlignment) flag_ok = false;
-            //    if (flag_ok)
-            //    {
-            //        return myCellStyle_buf;
-            //    }
-            //}
-            ICellStyle myCellStyle = workbook.CreateCellStyle();
             myCellStyle.BorderLeft = cellStyle.BorderLeft;
-            myCellStyle.BorderDiagonal = cellStyle.BorderDiagonal;
-            myCellStyle.BorderDiagonalLineStyle = cellStyle.BorderDiagonalLineStyle;
-            myCellStyle.BorderDiagonalColor = cellStyle.BorderDiagonalColor;
-            myCellStyle.FillForegroundColor = cellStyle.FillForegroundColor;
-            myCellStyle.FillBackgroundColor = cellStyle.FillBackgroundColor;
-            myCellStyle.FillPattern = cellStyle.FillPattern;
-            myCellStyle.BottomBorderColor = cellStyle.BottomBorderColor;
-            myCellStyle.TopBorderColor = cellStyle.TopBorderColor;
-            myCellStyle.RightBorderColor = cellStyle.RightBorderColor;
-            myCellStyle.LeftBorderColor = cellStyle.LeftBorderColor;
-            myCellStyle.BorderBottom = cellStyle.BorderBottom;
-            myCellStyle.BorderTop = cellStyle.BorderTop;
-            myCellStyle.BorderRight = cellStyle.BorderRight;
-   
-            myCellStyle.Rotation = cellStyle.Rotation;
-            myCellStyle.VerticalAlignment = cellStyle.VerticalAlignment;
-            myCellStyle.WrapText = cellStyle.WrapText;
-            myCellStyle.Alignment = cellStyle.Alignment;
-            myCellStyle.IsLocked = cellStyle.IsLocked;
-            myCellStyle.IsHidden = cellStyle.IsHidden;
-            myCellStyle.DataFormat = cellStyle.DataFormat;
-            myCellStyle.ShrinkToFit = cellStyle.ShrinkToFit;
-            myCellStyle.Indention = cellStyle.Indention;
+            IFont font = cellStyle.GetFont(workbook);
+            myCellStyle.FontName = font.FontName;
+            myCellStyle.FontHeight = font.FontHeight;
+            myCellStyle.FontHeightInPoints = font.FontHeightInPoints;
+            myCellStyle.IsItalic = font.IsItalic;
+            myCellStyle.IsStrikeout = font.IsStrikeout;
+            myCellStyle.Color = font.Color;
+            myCellStyle.TypeOffset = font.TypeOffset;
+            myCellStyle.Underline = font.Underline;
+            myCellStyle.Charset = font.Charset;
+            myCellStyle.Index = font.Index;
+            myCellStyle.Boldweight = font.Boldweight;
+            myCellStyle.IsBold = font.IsBold;
 
             return myCellStyle;
         }
+    
     }
     static public class ExcelClass
     {
@@ -471,12 +417,17 @@ namespace MyOffice
             myTimerBasic.StartTickTime();
             SheetClass sheetClass = json.JsonDeserializet<SheetClass>();
             if (sheetClass == null) return;
-
+           
             NPOI.SS.UserModel.IWorkbook workbook;
             string fileExt = Path.GetExtension(file).ToLower();
             if (fileExt == ".xlsx") { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(); } else if (fileExt == ".xls") { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(); } else { workbook = null; }
             if (workbook == null) { return; }
+            sheetClass.Init(workbook);
             NPOI.SS.UserModel.ISheet sheet = string.IsNullOrEmpty("Sheet1") ? workbook.CreateSheet("Sheet1") : workbook.CreateSheet("Sheet1");
+            for (int i = 0; i < sheetClass.ColumnsWidth.Count; i++)
+            {
+                sheet.SetColumnWidth(i, sheetClass.ColumnsWidth[i]);
+            }
             for (int i = 0; i < sheetClass.CellValues.Count; i++)
             {
                 CellValue cellValue = sheetClass.CellValues[i];
@@ -490,10 +441,7 @@ namespace MyOffice
             {
                 CellValue cellValue = sheetClass.CellValues[i];
                 sheet.GetRow(cellValue.RowStart).GetCell(cellValue.ColStart).SetCellValue(cellValue.Text);
-                sheet.GetRow(cellValue.RowStart).GetCell(cellValue.ColStart).CellStyle.SetFont(MyFont.ToIFont(workbook, cellValue.Font));
-                sheet.GetRow(cellValue.RowStart).GetCell(cellValue.ColStart).CellStyle.Alignment = cellValue.CellStyle.Alignment;
-                sheet.GetRow(cellValue.RowStart).GetCell(cellValue.ColStart).CellStyle.VerticalAlignment = cellValue.CellStyle.VerticalAlignment;
-
+                sheet.GetRow(cellValue.RowStart).GetCell(cellValue.ColStart).CellStyle = sheetClass.GetICellStyle(cellValue.CellStyle_index);
             }
 
             //转为字节数组  
@@ -526,10 +474,13 @@ namespace MyOffice
                 NPOI.SS.UserModel.ISheet sheet = workbook.GetSheetAt(0);
                 SheetClass sheetClass = new SheetClass();
                 for (int r = 0; r <= sheet.LastRowNum; r++)
-                {
-
+                {         
                     for (int c = 0; c < sheet.GetRow(r).LastCellNum; c++)
                     {
+                        if (r == 0)
+                        {
+                            sheetClass.ColumnsWidth.Add(sheet.GetColumnWidth(c));
+                        }
                         CellValue cellValue = new CellValue();
                         ICell cell = sheet.GetRow(r).GetCell(c);
                         object obj = NPOI_GetValueType(cell);
@@ -546,8 +497,9 @@ namespace MyOffice
                             cellValue.ColEnd = c;
                         }
 
-                        cellValue.Font = MyFont.ToMyFont(cell.CellStyle.GetFont(workbook));
-                        cellValue.CellStyle = MyCellStyle.ToMyCellStyle(cell.CellStyle);
+                        MyCellStyle myCellStyle = MyCellStyle.ToMyCellStyle(workbook, cell.CellStyle);
+                        int index = sheetClass.Add(myCellStyle);
+                        cellValue.CellStyle_index = index;
                         sheetClass.Add(cellValue);
                        
                     }
