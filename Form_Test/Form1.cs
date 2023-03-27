@@ -21,9 +21,9 @@ namespace Form_Test
         {
             DataTable dt = new DataTable();
            // dt = MyOffice.ExcelClass.LoadFile(@"C:\Users\User\Desktop\TEST.xls");
-       
 
-            dt = MyOffice.ExcelClass.NPOI_LoadFile( @"C:\Users\User\Desktop\藥檔資料.xls");
+            string str = MyOffice.ExcelClass.NPOI_LoadToJson(@"C:\Users\User\Desktop\藥品資料2.xls");
+            MyOffice.ExcelClass.NPOI_SaveFile(str, @"C:\Users\User\Desktop\藥品資料1.xls");
             dataGridView1.DataSource = dt;
         }
     }
