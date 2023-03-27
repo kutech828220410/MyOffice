@@ -21,9 +21,10 @@ namespace Form_Test
         {
             DataTable dt = new DataTable();
            // dt = MyOffice.ExcelClass.LoadFile(@"C:\Users\User\Desktop\TEST.xls");
-            dataGridView1.DataSource = dt;
+       
 
-            MyOffice.ExcelClass.SaveFile(dt, @"C:\Users\User\Desktop\TEST123");
+            dt = MyOffice.ExcelClass.NPOI_LoadFile( @"C:\Users\User\Desktop\藥檔資料.xls");
+            dataGridView1.DataSource = dt;
         }
     }
 }
