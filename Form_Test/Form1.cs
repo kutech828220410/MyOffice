@@ -23,17 +23,16 @@ namespace Form_Test
         {
             this.button_Json解碼.Click += Button_Json解碼_Click;
             this.button_讀取Excel.Click += Button_讀取Excel_Click;
+            this.button_存檔Excel.Click += Button_存檔Excel_Click;
             this.button_API_GET.Click += Button_API_GET_Click;
         }
 
 
-
         private void button1_Click(object sender, EventArgs e)
         {
-           // dt = MyOffice.ExcelClass.LoadFile(@"C:\Users\User\Desktop\TEST.xls");
+            // dt = MyOffice.ExcelClass.LoadFile(@"C:\Users\User\Desktop\TEST.xls");
 
-            SheetClass sheetClass = MyOffice.ExcelClass.NPOI_LoadToSheetClass(@"C:\Users\User\Desktop\台北榮總管制結存紀錄表.xls");
-            sheetClass.ReplaceCell(1, 1, "TTTTT");
+
             //sheetClass.AddNewCell(3, 3, 0, 10, "測試字體", new Font("標楷體", 20), NPOI_Color.RED, 800);
             //MyOffice.ExcelClass.NPOI_SaveFile(sheetClass, @"C:\Users\User\Desktop\藥品資料1.xls");
             //Rectangle rectangle = new Rectangle();
@@ -51,14 +50,45 @@ namespace Form_Test
             //        }
             //    }
             //}
-
-            using (Bitmap bitmap = sheetClass.GetBitmap(1370,756,0.8, H_Alignment.Center, V_Alignment.Center))
+            List<SheetClass> sheetClasses = new List<SheetClass>();
+            SheetClass sheetClass = new SheetClass("1");
+            sheetClass.ColumnsWidth.Add(10000);
+            sheetClass.ColumnsWidth.Add(10000);
+            sheetClass.ColumnsWidth.Add(10000);
+            sheetClass.ColumnsWidth.Add(10000);
+            for (int col = 0; col < 4; col++)
             {
-                using (Graphics g = panel1.CreateGraphics())
+                for (int row = 0; row < 8; row++)
                 {
-                    g.DrawImage(bitmap, new PointF());
+                    sheetClass.AddNewCell(row, col, $"A{col}-{row}", new Font("微軟正黑體", 14));
                 }
             }
+            for (int i = 0; i < sheetClass.Rows.Count; i++)
+            {
+                sheetClass.Rows[i].Height = 1000;
+            }
+            sheetClasses.Add(sheetClass);
+            sheetClass = new SheetClass("2");
+            sheetClass.ColumnsWidth.Add(10000);
+            sheetClass.ColumnsWidth.Add(10000);
+            sheetClass.ColumnsWidth.Add(10000);
+            sheetClass.ColumnsWidth.Add(10000);
+            for (int col = 0; col < 4; col++)
+            {
+                for (int row = 0; row < 8; row++)
+                {
+                    sheetClass.AddNewCell(row, col, $"B{col}-{row}", new Font("微軟正黑體", 14));
+                }
+            }
+            for (int i = 0; i < sheetClass.Rows.Count; i++)
+            {
+                sheetClass.Rows[i].Height = 1000;
+            }
+            sheetClasses.Add(sheetClass);
+            sheetClasses.NPOI_SaveFile(@"C:\Users\User\Desktop\TEST.xls");
+
+
+            List<SheetClass> sheetClasses_buf = MyOffice.ExcelClass.NPOI_LoadToSheetClasses(@"C:\Users\User\Desktop\TEST.xls");
         }
 
 
@@ -78,14 +108,24 @@ namespace Form_Test
                 }
             }
         }
+        SheetClass sheetClass;
         private void Button_讀取Excel_Click(object sender, EventArgs e)
         {
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                SheetClass sheetClass = MyOffice.ExcelClass.NPOI_LoadToSheetClass(openFileDialog1.FileName);
+                sheetClass = MyOffice.ExcelClass.NPOI_LoadToSheetClass(openFileDialog1.FileName);
                 this.textBox_Json.Text = sheetClass.JsonSerializationt(false);
             }
         }
+        private void Button_存檔Excel_Click(object sender, EventArgs e)
+        {
+            if (saveFileDialog_SaveExcel.ShowDialog() == DialogResult.OK)
+            {
+                sheetClass.NPOI_SaveFile(saveFileDialog_SaveExcel.FileName);
+                MessageBox.Show("完成!");
+            }
+        }
+    
         private void Button_API_GET_Click(object sender, EventArgs e)
         {
             string str = Basic.Net.WEBApiGet(@"https://localhost:44318/api/test/excel");

@@ -35,6 +35,9 @@
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.button_讀取Excel = new System.Windows.Forms.Button();
             this.button_API_GET = new System.Windows.Forms.Button();
+            this.comboBox_ExcelType = new System.Windows.Forms.ComboBox();
+            this.saveFileDialog_SaveExcel = new System.Windows.Forms.SaveFileDialog();
+            this.button_存檔Excel = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
@@ -95,11 +98,38 @@
             this.button_API_GET.Text = "API(GET)";
             this.button_API_GET.UseVisualStyleBackColor = true;
             // 
+            // comboBox_ExcelType
+            // 
+            this.comboBox_ExcelType.FormattingEnabled = true;
+            this.comboBox_ExcelType.Items.AddRange(new object[] {
+            "xls",
+            "xlsx"});
+            this.comboBox_ExcelType.Location = new System.Drawing.Point(1526, 888);
+            this.comboBox_ExcelType.Name = "comboBox_ExcelType";
+            this.comboBox_ExcelType.Size = new System.Drawing.Size(121, 20);
+            this.comboBox_ExcelType.TabIndex = 9;
+            // 
+            // saveFileDialog_SaveExcel
+            // 
+            this.saveFileDialog_SaveExcel.DefaultExt = "txt";
+            this.saveFileDialog_SaveExcel.Filter = "Excel File (*.xlsx)|*.xlsx|Excel File (*.xls)|*.xls|txt File (*.txt)|*.txt;";
+            // 
+            // button_存檔Excel
+            // 
+            this.button_存檔Excel.Location = new System.Drawing.Point(1420, 660);
+            this.button_存檔Excel.Name = "button_存檔Excel";
+            this.button_存檔Excel.Size = new System.Drawing.Size(100, 108);
+            this.button_存檔Excel.TabIndex = 10;
+            this.button_存檔Excel.Text = "存檔Excel";
+            this.button_存檔Excel.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1751, 1061);
+            this.Controls.Add(this.button_存檔Excel);
+            this.Controls.Add(this.comboBox_ExcelType);
             this.Controls.Add(this.button_API_GET);
             this.Controls.Add(this.button_讀取Excel);
             this.Controls.Add(this.button_Json解碼);
@@ -124,6 +154,9 @@
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.Button button_讀取Excel;
         private System.Windows.Forms.Button button_API_GET;
+        private System.Windows.Forms.ComboBox comboBox_ExcelType;
+        private System.Windows.Forms.SaveFileDialog saveFileDialog_SaveExcel;
+        private System.Windows.Forms.Button button_存檔Excel;
     }
 }
 

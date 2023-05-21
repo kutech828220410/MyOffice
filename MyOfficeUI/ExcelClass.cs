@@ -87,9 +87,22 @@ namespace MyOffice
         Center,
         Bottom,
     }
+    public enum Excel_Type
+    {
+        xls,
+        xlsx,
+    }
     [Serializable]
     public class SheetClass
     {
+        public SheetClass()
+        {
+
+        }
+        public SheetClass(string Name)
+        {
+            this.Name = Name;
+        }
         public class Row
         {
             public int Count
@@ -109,6 +122,13 @@ namespace MyOffice
                         if (Cell[i].Height > temp) temp = Cell[i].Height;
                     }
                     return temp / 20;
+                }
+                set
+                {
+                    for (int i = 0; i < Cell.Count; i++)
+                    {
+                        Cell[i].Height = (short)value;
+                    }
                 }
             }
             private List<CellValue> cell = new List<CellValue>();
@@ -163,6 +183,7 @@ namespace MyOffice
         public double Scale_X = 7.5;
         public double Scale_Y = 4D / 3D;
 
+        private string name = "";
         private List<CellValue> cellValues = new List<CellValue>();
         private List<MyCellStyle> myCellStyles = new List<MyCellStyle>();
         private List<int> columnsWidth = new List<int>();
@@ -170,7 +191,7 @@ namespace MyOffice
         public List<CellValue> CellValues { get => cellValues; set => cellValues = value; }
         public List<MyCellStyle> MyCellStyles { get => myCellStyles; set => myCellStyles = value; }
         public List<int> ColumnsWidth { get => columnsWidth; set => columnsWidth = value; }
-
+        public string Name { get => name; set => name = value; }
 
         public int GetWidth(int index)
         {
@@ -515,6 +536,10 @@ namespace MyOffice
         {
             this.AddNewCell(RowStart, RowEnd, ColStart, ColEnd, text, font, NPOI_Color.BLACK);
         }
+        public void AddNewCell(int RowStart, int RowEnd, int ColStart, int ColEnd, string text, Font font,int height)
+        {
+            this.AddNewCell(RowStart, RowEnd, ColStart, ColEnd, text, font, NPOI_Color.BLACK, height);
+        }
         public void AddNewCell(int row, int col, string text, Font font, NPOI_Color foreColor, int height)
         {
             this.AddNewCell(row, row, col, col, text, font, foreColor, height);
@@ -539,7 +564,7 @@ namespace MyOffice
         {
             this.AddNewCell(RowStart, RowEnd, ColStart, ColEnd, text, font, foreColor, 0, horizontalAlignment, verticalAlignment, BorderStyle.None, BorderStyle.None, BorderStyle.None, BorderStyle.None);
         }
-        public void AddNewCell(int RowStart , int RowEnd, int ColStart, int ColEnd, string text , Font font, NPOI_Color foreColor, int height = 0 ,HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center, VerticalAlignment verticalAlignment = VerticalAlignment.Center, BorderStyle BS_top = BorderStyle.Thin, BorderStyle BS_bottom= BorderStyle.Thin ,BorderStyle BS_left = BorderStyle.Thin, BorderStyle BS_right = BorderStyle.Thin)
+        public void AddNewCell(int RowStart, int RowEnd, int ColStart, int ColEnd, string text, Font font, NPOI_Color foreColor, int height = 0, HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center, VerticalAlignment verticalAlignment = VerticalAlignment.Center, BorderStyle BS_top = BorderStyle.Thin, BorderStyle BS_bottom = BorderStyle.Thin, BorderStyle BS_left = BorderStyle.Thin, BorderStyle BS_right = BorderStyle.Thin, bool flag_Slave = false)
         {
             CellValue cellValue = new CellValue();
             MyCellStyle myCellStyle = new MyCellStyle();
@@ -549,6 +574,7 @@ namespace MyOffice
             cellValue.ColEnd = ColEnd;
             cellValue.Text = text;
             cellValue.Height = (short)height;
+            cellValue.Slave = flag_Slave;
 
             myCellStyle.FontName = font.Name;
             myCellStyle.FontHeight = font.Height;
@@ -606,6 +632,10 @@ namespace MyOffice
             this.Add(cellValue, myCellStyle);
         }
 
+        public void SetSlave(int Row, int Col, bool flag_Slave)
+        {
+            this.Rows[Row].Cell[Col].Slave = flag_Slave;
+        }
         public void ReplaceCell(int Row, int Col, string Text)
         {
             this.Rows[Row].Cell[Col].Text = Text;
@@ -950,7 +980,173 @@ namespace MyOffice
          
       
         }
+        public static byte[] NPOI_GetBytes(this System.Data.DataTable dt)
+        {
+            return NPOI_GetBytes(dt, Excel_Type.xls);
+        }
+        public static byte[] NPOI_GetBytes(this System.Data.DataTable dt, Excel_Type excel_Type)
+        {
+            NPOI.SS.UserModel.IWorkbook workbook;
+            if (excel_Type == Excel_Type.xlsx) { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(); } else if (excel_Type == Excel_Type.xls) { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(); } else { workbook = null; }
+            if (workbook == null) { return null; }
+            NPOI.SS.UserModel.ISheet sheet = string.IsNullOrEmpty(dt.TableName) ? workbook.CreateSheet("Sheet1") : workbook.CreateSheet(dt.TableName);
 
+            //表头  
+            NPOI.SS.UserModel.IRow row = sheet.CreateRow(0);
+            for (int i = 0; i < dt.Columns.Count; i++)
+            {
+                NPOI.SS.UserModel.ICell cell = row.CreateCell(i);
+                cell.SetCellValue(dt.Columns[i].ColumnName);
+            }
+
+            //数据  
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                NPOI.SS.UserModel.IRow row1 = sheet.CreateRow(i + 1);
+                for (int j = 0; j < dt.Columns.Count; j++)
+                {
+                    NPOI.SS.UserModel.ICell cell = row1.CreateCell(j);
+                    cell.SetCellValue(dt.Rows[i][j].ToString());
+                }
+            }
+
+            //转为字节数组  
+            MemoryStream stream = new MemoryStream();
+            workbook.Write(stream);
+            var buf = stream.ToArray();
+            stream.Dispose();
+            return buf;
+        }
+        public static byte[] NPOI_GetBytes(this string json)
+        {
+            return NPOI_GetBytes(json, Excel_Type.xls);
+        }
+        public static byte[] NPOI_GetBytes(this string json , Excel_Type excel_Type)
+        {
+            Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
+            myTimerBasic.StartTickTime();
+            SheetClass sheetClass = json.JsonDeserializet<SheetClass>();
+            if (sheetClass == null) return null;
+
+            NPOI.SS.UserModel.IWorkbook workbook;
+            if (excel_Type == Excel_Type.xlsx) { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(); } else if (excel_Type == Excel_Type.xls) { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(); } else { workbook = null; }
+
+            if (workbook == null) { return null; }
+            sheetClass.Init(workbook);
+
+
+            NPOI.SS.UserModel.ISheet sheet = string.IsNullOrEmpty("Sheet1") ? workbook.CreateSheet("Sheet1") : workbook.CreateSheet("Sheet1");
+            for (int i = 0; i < sheetClass.ColumnsWidth.Count; i++)
+            {
+                sheet.SetColumnWidth(i, sheetClass.ColumnsWidth[i]);
+            }
+            for (int i = 0; i < sheetClass.CellValues.Count; i++)
+            {
+                CellValue cellValue = sheetClass.CellValues[i];
+                if (sheet.GetRow(cellValue.RowStart) == null) sheet.CreateRow(cellValue.RowStart);
+                if (sheet.GetRow(cellValue.RowStart).GetCell(cellValue.ColStart) == null) sheet.GetRow(cellValue.RowStart).CreateCell(cellValue.ColStart);
+
+            }
+            for (int i = 0; i < sheetClass.CellValues.Count; i++)
+            {
+                CellValue cellValue = sheetClass.CellValues[i];
+                ICell cell = sheet.GetRow(cellValue.RowStart).GetCell(cellValue.ColStart);
+                cell.SetCellValue(cellValue.Text);
+                cell.CellStyle = sheetClass.GetICellStyle(cellValue.CellStyle_index);
+
+            }
+            for (int i = 0; i < sheetClass.CellValues.Count; i++)
+            {
+                CellValue cellValue = sheetClass.CellValues[i];
+                sheet.GetRow(cellValue.RowStart).Height = cellValue.Height;
+                if (!cellValue.Slave)
+                {
+                    sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(cellValue.RowStart, cellValue.RowEnd, cellValue.ColStart, cellValue.ColEnd));
+
+                }
+            }
+            //转为字节数组  
+            MemoryStream stream = new MemoryStream();
+            workbook.Write(stream);
+            var buf = stream.ToArray();
+            stream.Dispose();
+
+
+            Console.WriteLine($"存檔耗時{myTimerBasic.ToString()}");
+            return buf;
+        }
+        public static byte[] NPOI_GetBytes(this SheetClass sheetClass, Excel_Type excel_Type)
+        {
+            return NPOI_GetBytes(sheetClass.JsonSerializationt(), excel_Type);
+        }
+        public static byte[] NPOI_GetBytes(this SheetClass sheetClass)
+        {
+            return NPOI_GetBytes(sheetClass.JsonSerializationt());
+        }
+        public static byte[] NPOI_GetBytes(this List<SheetClass> sheetClasses)
+        {
+            return NPOI_GetBytes(sheetClasses, Excel_Type.xls);
+        }
+        public static byte[] NPOI_GetBytes(this List<SheetClass> sheetClasses, Excel_Type excel_Type)
+        {
+            Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
+            myTimerBasic.StartTickTime();
+
+
+
+
+            NPOI.SS.UserModel.IWorkbook workbook;
+            if (excel_Type == Excel_Type.xlsx) { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(); } else if (excel_Type == Excel_Type.xls) { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(); } else { workbook = null; }
+            if (workbook == null) { return null; }
+
+            for (int p = 0; p < sheetClasses.Count; p++)
+            {
+                SheetClass sheetClass = sheetClasses[p];
+                sheetClass.Init(workbook);
+
+
+                NPOI.SS.UserModel.ISheet sheet = string.IsNullOrEmpty($"{sheetClass.Name}") ? workbook.CreateSheet($"Sheet{p}") : workbook.CreateSheet($"{sheetClass.Name}");
+                for (int i = 0; i < sheetClass.ColumnsWidth.Count; i++)
+                {
+                    sheet.SetColumnWidth(i, sheetClass.ColumnsWidth[i]);
+                }
+                for (int i = 0; i < sheetClass.CellValues.Count; i++)
+                {
+                    CellValue cellValue = sheetClass.CellValues[i];
+                    if (sheet.GetRow(cellValue.RowStart) == null) sheet.CreateRow(cellValue.RowStart);
+                    if (sheet.GetRow(cellValue.RowStart).GetCell(cellValue.ColStart) == null) sheet.GetRow(cellValue.RowStart).CreateCell(cellValue.ColStart);
+
+                }
+                for (int i = 0; i < sheetClass.CellValues.Count; i++)
+                {
+                    CellValue cellValue = sheetClass.CellValues[i];
+                    ICell cell = sheet.GetRow(cellValue.RowStart).GetCell(cellValue.ColStart);
+                    cell.SetCellValue(cellValue.Text);
+                    cell.CellStyle = sheetClass.GetICellStyle(cellValue.CellStyle_index);
+
+                }
+                for (int i = 0; i < sheetClass.CellValues.Count; i++)
+                {
+                    CellValue cellValue = sheetClass.CellValues[i];
+                    sheet.GetRow(cellValue.RowStart).Height = cellValue.Height;
+                    if (!cellValue.Slave)
+                    {
+                        sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(cellValue.RowStart, cellValue.RowEnd, cellValue.ColStart, cellValue.ColEnd));
+
+                    }
+                }
+                //转为字节数组  
+
+            }
+            MemoryStream stream = new MemoryStream();
+            workbook.Write(stream);
+            var buf = stream.ToArray();
+            stream.Dispose();
+
+            return buf;
+            Console.WriteLine($"存檔耗時{myTimerBasic.ToString()}");
+        }
+       
         public static void NPOI_SaveFile(this System.Data.DataTable dt, string filepath)
         {
             NPOI.SS.UserModel.IWorkbook workbook;
@@ -992,7 +1188,6 @@ namespace MyOffice
 
 
         }
-
         public static void NPOI_SaveFile(this SheetClass sheetClass, string file)
         {
             NPOI_SaveFile(sheetClass.JsonSerializationt(), file);
@@ -1016,7 +1211,7 @@ namespace MyOffice
                 sheetClass.Init(workbook);
 
 
-                NPOI.SS.UserModel.ISheet sheet = string.IsNullOrEmpty($"Sheet{p}") ? workbook.CreateSheet($"Sheet{p}") : workbook.CreateSheet($"Sheet{p}");
+                NPOI.SS.UserModel.ISheet sheet = string.IsNullOrEmpty($"{sheetClass.Name}") ? workbook.CreateSheet($"Sheet{p}") : workbook.CreateSheet($"{sheetClass.Name}");
                 for (int i = 0; i < sheetClass.ColumnsWidth.Count; i++)
                 {
                     sheet.SetColumnWidth(i, sheetClass.ColumnsWidth[i]);
@@ -1053,11 +1248,17 @@ namespace MyOffice
             workbook.Write(stream);
             var buf = stream.ToArray();
 
-            //保存为Excel文件  
-            using (FileStream fs = new FileStream(file, FileMode.Create, FileAccess.Write))
+            try
             {
-                fs.Write(buf, 0, buf.Length);
-                fs.Flush();
+                using (FileStream fs = new FileStream(file, FileMode.Create, FileAccess.Write))
+                {
+                    fs.Write(buf, 0, buf.Length);
+                    fs.Flush();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{ex.Message} {DateTime.Now.ToDateTimeString()}");
             }
 
             Console.WriteLine($"存檔耗時{myTimerBasic.ToString()}");
@@ -1110,20 +1311,133 @@ namespace MyOffice
             MemoryStream stream = new MemoryStream();
             workbook.Write(stream);
             var buf = stream.ToArray();
-
-            //保存为Excel文件  
-            using (FileStream fs = new FileStream(file, FileMode.Create, FileAccess.Write))
+            try
             {
-                fs.Write(buf, 0, buf.Length);
-                fs.Flush();
+                using (FileStream fs = new FileStream(file, FileMode.Create, FileAccess.Write))
+                {
+                    fs.Write(buf, 0, buf.Length);
+                    fs.Flush();
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{ex.Message} {DateTime.Now.ToDateTimeString()}");
+            }
+            //保存为Excel文件  
+          
  
             Console.WriteLine($"存檔耗時{myTimerBasic.ToString()}");
+        }
+        public static List<SheetClass> NPOI_LoadToSheetClasses(this string file)
+        {
+            List<SheetClass> sheetClasses = NPOI_LoadSheetsToJson(file).JsonDeserializet<List<SheetClass>>();
+            return sheetClasses;
         }
         public static SheetClass NPOI_LoadToSheetClass(this string file)
         {
             SheetClass sheetClass = NPOI_LoadToJson(file).JsonDeserializet<SheetClass>();
             return sheetClass;
+        }
+        public static string NPOI_LoadSheetsToJson(this string file)
+        {
+            Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
+            myTimerBasic.StartTickTime();
+
+            string result = "";
+            NPOI.SS.UserModel.IWorkbook workbook;
+            string fileExt = Path.GetExtension(file).ToLower();
+            try
+            {
+                FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read);
+                if (fileExt == ".xlsx") { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(fs); } else if (fileExt == ".xls") { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(fs); } else { workbook = null; }
+                if (workbook == null) { return null; }
+                List<SheetClass> sheetClasses = new List<SheetClass>();
+                for (int num = 0; num < workbook.NumberOfSheets; num++)
+                {
+                    NPOI.SS.UserModel.ISheet sheet = workbook.GetSheetAt(num);
+                    SheetClass sheetClass = new SheetClass(sheet.SheetName);
+                    List<ICell> cells = new List<ICell>();
+
+                    for (int r = 0; r <= sheet.LastRowNum; r++)
+                    {
+                        for (int c = 0; c < sheet.GetRow(r).LastCellNum; c++)
+                        {
+
+                            if (r == 0)
+                            {
+                                sheetClass.ColumnsWidth.Add(sheet.GetColumnWidth(c));
+                            }
+                            CellValue cellValue = new CellValue();
+                            ICell cell = sheet.GetRow(r).GetCell(c);
+
+                            object obj = NPOI_GetValueType(cell);
+                            if (obj != null)
+                            {
+                                cellValue.Text = obj.ObjectToString();
+                            }
+                            cellValue.Height = cell.Row.Height;
+                            bool flag_IsMergedCell = cell.IsMergedCell;
+
+                            if (flag_IsMergedCell)
+                            {
+                                sheet.NPOI_IsMergeCell(r, c, ref cellValue);
+                            }
+                            else
+                            {
+                                cellValue.RowStart = r;
+                                cellValue.RowEnd = r;
+                                cellValue.ColStart = c;
+                                cellValue.ColEnd = c;
+                                cellValue.Slave = false;
+                            }
+                            CellValue cellValue_buf = sheetClass.SortCellValue(cellValue.RowStart, cellValue.RowEnd, cellValue.ColStart, cellValue.ColEnd);
+                            if (cellValue_buf == null && flag_IsMergedCell == true)
+                            {
+
+                                ICell cell_end = sheet.GetRow(cellValue.RowEnd).GetCell(cellValue.ColEnd);
+                                cell.CellStyle.BorderRight = cell_end.CellStyle.BorderRight;
+                                cell.CellStyle.BorderBottom = cell_end.CellStyle.BorderBottom;
+                                cellValue.Slave = false;
+                            }
+                            else if (cellValue_buf != null && flag_IsMergedCell == true)
+                            {
+                                cellValue.RowStart = r;
+                                cellValue.RowEnd = r;
+                                cellValue.ColStart = c;
+                                cellValue.ColEnd = c;
+                                cellValue.Slave = true;
+                            }
+
+
+                            MyCellStyle myCellStyle = MyCellStyle.ToMyCellStyle(workbook, cell.CellStyle);
+                            sheetClass.Add(cellValue, myCellStyle);
+
+                        }
+                    }
+                    sheetClasses.Add(sheetClass);
+                   
+                }
+                result = sheetClasses.JsonSerializationt(false);
+                //Console.WriteLine($"{result}");
+                fs.Close();
+                fs.Dispose();
+                workbook.Close();
+                Console.WriteLine($"讀檔耗時{myTimerBasic.ToString()}");
+
+            }
+            catch
+            {
+                Console.WriteLine($"NPOI_LoadHeader 檔案已開啟!無法讀取! , 位置 : {file}");
+                return "[]";
+            }
+            finally
+            {
+
+            }
+
+
+            return result;
+
         }
         public static string NPOI_LoadToJson(this string file)
         {
@@ -1140,7 +1454,7 @@ namespace MyOffice
                 if (workbook == null) { return null; }
                 NPOI.SS.UserModel.ISheet sheet = workbook.GetSheetAt(0);
                 
-                SheetClass sheetClass = new SheetClass();
+                SheetClass sheetClass = new SheetClass(sheet.SheetName);
                 List<ICell> cells = new List<ICell>();
                 
                 for (int r = 0; r <= sheet.LastRowNum; r++)
@@ -1160,6 +1474,7 @@ namespace MyOffice
                         {
                             cellValue.Text = obj.ObjectToString();
                         }
+                        if (cell == null) continue;
                         cellValue.Height = cell.Row.Height;
                         bool flag_IsMergedCell = cell.IsMergedCell;
 
@@ -1219,6 +1534,9 @@ namespace MyOffice
     
             return result;
         }
+
+
+
         public static DataTable NPOI_LoadFile(this string file)
         {
             try
