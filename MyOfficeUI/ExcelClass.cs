@@ -140,7 +140,7 @@ namespace MyOffice
             get
             {
                 List<Row> rows = new List<Row>();
-                List<CellValue> cellValues_dist = cellValues.Distinct(new Distinct_CellValue()).ToList();
+                List<CellValue> cellValues_dist = cellValues.Distinct(new Distinct_CellValueRowStart()).ToList();
                 cellValues_dist.Sort(new Icp_CellValue());
                 for (int i = 0; i < cellValues_dist.Count; i++)
                 {
@@ -186,6 +186,10 @@ namespace MyOffice
         private string name = "";
         private List<CellValue> cellValues = new List<CellValue>();
         private List<MyCellStyle> myCellStyles = new List<MyCellStyle>();
+
+        private List<CellValue> cellValues_buffer = new List<CellValue>();
+        private List<MyCellStyle> myCellStyles_buffer = new List<MyCellStyle>();
+
         private List<int> columnsWidth = new List<int>();
 
         public List<CellValue> CellValues { get => cellValues; set => cellValues = value; }
@@ -229,8 +233,7 @@ namespace MyOffice
         {
             lock(CellValues)
             {
-                int index = this.Add(myCellStyle);
-                cellValue.CellStyle_index = index;
+             
                 List<CellValue> CellValues_buf = new List<CellValue>();
                 CellValues_buf = (from value in CellValues
                                   where value.RowStart == cellValue.RowStart
@@ -240,6 +243,8 @@ namespace MyOffice
                                   select value).ToList();
                 if (CellValues_buf.Count == 0)
                 {
+                    int index = this.Add(myCellStyle);
+                    cellValue.CellStyle_index = index;
                     this.CellValues.Add(cellValue);
                     return true;
                 }
@@ -631,7 +636,58 @@ namespace MyOffice
 
             this.Add(cellValue, myCellStyle);
         }
+        public void NewCell_Webapi_Buffer_Clear()
+        {
+            cellValues_buffer.Clear();
+            myCellStyles_buffer.Clear();
+        }
+        public void AddNewCell_Webapi_Buffer(int Row, int Col, string text, string FontName, float FontHeightInPoints, bool IsBold, NPOI_Color foreColor, int height = 0, HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center, VerticalAlignment verticalAlignment = VerticalAlignment.Center, BorderStyle BS = BorderStyle.Thin)
+        {
+            this.AddNewCell_Webapi_Buffer(Row, Row, Col, Col, text, FontName, FontHeightInPoints, IsBold, foreColor, height, horizontalAlignment, verticalAlignment, BS, BS, BS, BS);
+        }
+        public void AddNewCell_Webapi_Buffer(int RowStart, int RowEnd, int ColStart, int ColEnd, string text, string FontName, float FontHeightInPoints, bool IsBold, NPOI_Color foreColor, int height = 0, HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center, VerticalAlignment verticalAlignment = VerticalAlignment.Center, BorderStyle BS = BorderStyle.Thin)
+        {
+            this.AddNewCell_Webapi_Buffer(RowStart, RowEnd, ColStart, ColEnd, text, FontName, FontHeightInPoints, IsBold, foreColor, height, horizontalAlignment, verticalAlignment, BS, BS, BS, BS);
+        }
 
+        public void AddNewCell_Webapi_Buffer(int RowStart, int RowEnd, int ColStart, int ColEnd, string text, string FontName, float FontHeightInPoints, bool IsBold, NPOI_Color foreColor, int height = 0, HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center, VerticalAlignment verticalAlignment = VerticalAlignment.Center, BorderStyle BS_top = BorderStyle.Thin, BorderStyle BS_bottom = BorderStyle.Thin, BorderStyle BS_left = BorderStyle.Thin, BorderStyle BS_right = BorderStyle.Thin)
+        {
+            CellValue cellValue = new CellValue();
+            MyCellStyle myCellStyle = new MyCellStyle();
+            cellValue.RowStart = RowStart;
+            cellValue.RowEnd = RowEnd;
+            cellValue.ColStart = ColStart;
+            cellValue.ColEnd = ColEnd;
+            cellValue.Text = text;
+            cellValue.Height = (short)height;
+
+            myCellStyle.FontName = FontName;
+            myCellStyle.FontHeight = FontHeightInPoints;
+            myCellStyle.FontHeightInPoints = FontHeightInPoints;
+
+            myCellStyle.Color = (short)(foreColor);
+            myCellStyle.IsBold = IsBold;
+            myCellStyle.Alignment = horizontalAlignment;
+            myCellStyle.VerticalAlignment = verticalAlignment;
+
+            myCellStyle.BorderTop = BS_top;
+            myCellStyle.BorderBottom = BS_bottom;
+            myCellStyle.BorderLeft = BS_left;
+            myCellStyle.BorderRight = BS_right;
+
+            int index = this.Add(myCellStyle);
+            cellValue.CellStyle_index = index;
+            cellValues_buffer.Add(cellValue);
+         
+        }
+        public void NewCell_Webapi_Buffer_Caculate()
+        {
+            cellValues_buffer = cellValues_buffer.Distinct(new Distinct_CellValue()).ToList();
+            for (int i = 0; i < cellValues_buffer.Count; i++)
+            {
+                cellValues.Add(cellValues_buffer[i]);
+            }
+        }
         public void SetSlave(int Row, int Col, bool flag_Slave)
         {
             this.Rows[Row].Cell[Col].Slave = flag_Slave;
@@ -687,7 +743,7 @@ namespace MyOffice
                 return x.RowStart.CompareTo(y.RowStart);
             }
         }
-        private class Distinct_CellValue : IEqualityComparer<CellValue>
+        private class Distinct_CellValueRowStart : IEqualityComparer<CellValue>
         {
             public bool Equals(CellValue x, CellValue y)
             {
@@ -699,7 +755,18 @@ namespace MyOffice
                 return 1;
             }
         }
+        private class Distinct_CellValue : IEqualityComparer<CellValue>
+        {
+            public bool Equals(CellValue x, CellValue y)
+            {
+                return (x.RowStart == y.RowStart) && (x.RowEnd == y.RowEnd) && (x.ColStart == y.ColStart) && (x.ColEnd == y.ColEnd);
+            }
 
+            public int GetHashCode(CellValue obj)
+            {
+                return 1;
+            }
+        }
         public static Bitmap ScaleImage(Bitmap pBmp, int pWidth, int pHeight)
         {
             try
@@ -938,8 +1005,7 @@ namespace MyOffice
                     for (int j = 0; j < dataTable.Columns.Count; j++)
                     {
                         //從第二行第一列開始寫入資料
-
-                        wsheet.Cells[i + 2, j + 1] = dataTable.Rows[i][j].ToString();
+                        wsheet.Cells[i + 2, j + 1] = dataTable.Rows[i][j];
                     }
                 }
 
@@ -1146,8 +1212,8 @@ namespace MyOffice
             return buf;
             Console.WriteLine($"存檔耗時{myTimerBasic.ToString()}");
         }
-       
-        public static void NPOI_SaveFile(this System.Data.DataTable dt, string filepath)
+
+        public static void NPOI_SaveFile(this System.Data.DataTable dt, string filepath, params int[] int_col_ary)
         {
             NPOI.SS.UserModel.IWorkbook workbook;
             string fileExt = Path.GetExtension(filepath).ToLower();
@@ -1170,7 +1236,27 @@ namespace MyOffice
                 for (int j = 0; j < dt.Columns.Count; j++)
                 {
                     NPOI.SS.UserModel.ICell cell = row1.CreateCell(j);
-                    cell.SetCellValue(dt.Rows[i][j].ToString());
+                    bool flag_is_double = false;
+                    for (int k = 0; k < int_col_ary.Length; k++)
+                    {
+                        if(int_col_ary[k] == j)
+                        {
+                            if(dt.Rows[i][j].ObjectToString().StringIsEmpty() == false)
+                            {
+                                cell.SetCellValue(dt.Rows[i][j].ObjectToString().StringToDouble());
+                                flag_is_double = true;
+                                break;
+                            }
+                            else
+                            {
+                                cell.SetCellValue(0);
+                                flag_is_double = true;
+                                break;
+                            }
+                         
+                        }
+                    }
+                    if(!flag_is_double)cell.SetCellValue(dt.Rows[i][j].ToString());
                 }
             }
 
@@ -1335,7 +1421,7 @@ namespace MyOffice
         }
         public static SheetClass NPOI_LoadToSheetClass(this string file)
         {
-            SheetClass sheetClass = NPOI_LoadToJson(file).JsonDeserializet<SheetClass>();
+            SheetClass sheetClass = NPOI_LoadSheetToJson(file).JsonDeserializet<SheetClass>();
             return sheetClass;
         }
         public static string NPOI_LoadSheetsToJson(this string file)
@@ -1439,7 +1525,7 @@ namespace MyOffice
             return result;
 
         }
-        public static string NPOI_LoadToJson(this string file)
+        public static string NPOI_LoadSheetToJson(this string file)
         {
             Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
             myTimerBasic.StartTickTime();
@@ -1535,8 +1621,60 @@ namespace MyOffice
             return result;
         }
 
-
-
+        public static DataTable NPOI_LoadFile(byte[] bytes , string fileExt = ".xlsx")
+        {
+            try
+            {
+                DataTable dt = new DataTable();
+                NPOI.SS.UserModel.IWorkbook workbook;
+                using (MemoryStream fs = new MemoryStream(bytes))
+                {
+                    //XSSFWorkbook 适用XLSX格式，HSSFWorkbook 适用XLS格式
+                    if (fileExt == ".xlsx") { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(fs); } else if (fileExt == ".xls") { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(fs); } else { workbook = null; }
+                    if (workbook == null) { return null; }
+                    NPOI.SS.UserModel.ISheet sheet = workbook.GetSheetAt(0);
+                    //表头
+                    NPOI.SS.UserModel.IRow header = sheet.GetRow(sheet.FirstRowNum);
+                    List<int> columns = new List<int>();
+                    for (int i = 0; i < header.LastCellNum; i++)
+                    {
+                        object obj = NPOI_GetValueType(header.GetCell(i));
+                        if (obj == null || obj.ToString() == string.Empty)
+                        {
+                            dt.Columns.Add(new DataColumn("Columns" + i.ToString()));
+                        }
+                        else
+                        {
+                            dt.Columns.Add(new DataColumn(obj.ToString()));
+                        }
+                        columns.Add(i);
+                    }
+                    //数据
+                    for (int i = sheet.FirstRowNum + 1; i <= sheet.LastRowNum; i++)
+                    {
+                        DataRow dr = dt.NewRow();
+                        bool hasValue = false;
+                        foreach (int j in columns)
+                        {
+                            dr[j] = NPOI_GetValueType(sheet.GetRow(i).GetCell(j));
+                            if (dr[j] != null && dr[j].ToString() != string.Empty)
+                            {
+                                hasValue = true;
+                            }
+                        }
+                        if (hasValue)
+                        {
+                            dt.Rows.Add(dr);
+                        }
+                    }
+                }
+                return dt;
+            }
+            catch
+            {
+                return null;
+            }
+        }
         public static DataTable NPOI_LoadFile(this string file)
         {
             try
