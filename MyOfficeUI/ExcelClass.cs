@@ -1501,7 +1501,7 @@ namespace MyOffice
                         }
                     }
                     sheetClasses.Add(sheetClass);
-                   
+
                 }
                 result = sheetClasses.JsonSerializationt(false);
                 //Console.WriteLine($"{result}");
@@ -1514,6 +1514,106 @@ namespace MyOffice
             catch
             {
                 Console.WriteLine($"NPOI_LoadHeader 檔案已開啟!無法讀取! , 位置 : {file}");
+                return "[]";
+            }
+            finally
+            {
+
+            }
+
+
+            return result;
+
+        }
+        public static string NPOI_LoadSheetsToJson(byte[] bytes, string fileExt = ".xlsx")
+        {
+            Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
+            myTimerBasic.StartTickTime();
+
+            string result = "";
+            NPOI.SS.UserModel.IWorkbook workbook;
+            try
+            {
+                MemoryStream fs = new MemoryStream(bytes);
+                if (fileExt == ".xlsx") { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(fs); } else if (fileExt == ".xls") { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(fs); } else { workbook = null; }
+                if (workbook == null) { return null; }
+                List<SheetClass> sheetClasses = new List<SheetClass>();
+                for (int num = 0; num < workbook.NumberOfSheets; num++)
+                {
+                    NPOI.SS.UserModel.ISheet sheet = workbook.GetSheetAt(num);
+                    SheetClass sheetClass = new SheetClass(sheet.SheetName);
+                    List<ICell> cells = new List<ICell>();
+
+                    for (int r = 0; r <= sheet.LastRowNum; r++)
+                    {
+                        for (int c = 0; c < sheet.GetRow(r).LastCellNum; c++)
+                        {
+
+                            if (r == 0)
+                            {
+                                sheetClass.ColumnsWidth.Add(sheet.GetColumnWidth(c));
+                            }
+                            CellValue cellValue = new CellValue();
+                            ICell cell = sheet.GetRow(r).GetCell(c);
+
+                            object obj = NPOI_GetValueType(cell);
+                            if (obj != null)
+                            {
+                                cellValue.Text = obj.ObjectToString();
+                            }
+                            cellValue.Height = cell.Row.Height;
+                            bool flag_IsMergedCell = cell.IsMergedCell;
+
+                            if (flag_IsMergedCell)
+                            {
+                                sheet.NPOI_IsMergeCell(r, c, ref cellValue);
+                            }
+                            else
+                            {
+                                cellValue.RowStart = r;
+                                cellValue.RowEnd = r;
+                                cellValue.ColStart = c;
+                                cellValue.ColEnd = c;
+                                cellValue.Slave = false;
+                            }
+                            CellValue cellValue_buf = sheetClass.SortCellValue(cellValue.RowStart, cellValue.RowEnd, cellValue.ColStart, cellValue.ColEnd);
+                            if (cellValue_buf == null && flag_IsMergedCell == true)
+                            {
+
+                                ICell cell_end = sheet.GetRow(cellValue.RowEnd).GetCell(cellValue.ColEnd);
+                                cell.CellStyle.BorderRight = cell_end.CellStyle.BorderRight;
+                                cell.CellStyle.BorderBottom = cell_end.CellStyle.BorderBottom;
+                                cellValue.Slave = false;
+                            }
+                            else if (cellValue_buf != null && flag_IsMergedCell == true)
+                            {
+                                cellValue.RowStart = r;
+                                cellValue.RowEnd = r;
+                                cellValue.ColStart = c;
+                                cellValue.ColEnd = c;
+                                cellValue.Slave = true;
+                            }
+
+
+                            MyCellStyle myCellStyle = MyCellStyle.ToMyCellStyle(workbook, cell.CellStyle);
+                            sheetClass.Add(cellValue, myCellStyle);
+
+                        }
+                    }
+                    sheetClasses.Add(sheetClass);
+
+                }
+                result = sheetClasses.JsonSerializationt(false);
+                //Console.WriteLine($"{result}");
+                fs.Close();
+                fs.Dispose();
+                workbook.Close();
+                Console.WriteLine($"讀檔耗時{myTimerBasic.ToString()}");
+
+            }
+            catch
+            {
+                Console.WriteLine($"NPOI_LoadHeader 檔案已開啟!無法讀取!");
                 return "[]";
             }
             finally
@@ -1620,6 +1720,101 @@ namespace MyOffice
     
             return result;
         }
+        public static string NPOI_LoadSheetToJson(byte[] bytes, string fileExt = ".xlsx")
+        {
+            Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
+            myTimerBasic.StartTickTime();
+
+            string result = "";
+            NPOI.SS.UserModel.IWorkbook workbook;
+            try
+            {
+                MemoryStream fs = new MemoryStream(bytes);
+                if (fileExt == ".xlsx") { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(fs); } else if (fileExt == ".xls") { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(fs); } else { workbook = null; }
+                if (workbook == null) { return null; }
+                NPOI.SS.UserModel.ISheet sheet = workbook.GetSheetAt(0);
+
+                SheetClass sheetClass = new SheetClass(sheet.SheetName);
+                List<ICell> cells = new List<ICell>();
+
+                for (int r = 0; r <= sheet.LastRowNum; r++)
+                {
+                    for (int c = 0; c < sheet.GetRow(r).LastCellNum; c++)
+                    {
+
+                        if (r == 0)
+                        {
+                            sheetClass.ColumnsWidth.Add(sheet.GetColumnWidth(c));
+                        }
+                        CellValue cellValue = new CellValue();
+                        ICell cell = sheet.GetRow(r).GetCell(c);
+
+                        object obj = NPOI_GetValueType(cell);
+                        if (obj != null)
+                        {
+                            cellValue.Text = obj.ObjectToString();
+                        }
+                        if (cell == null) continue;
+                        cellValue.Height = cell.Row.Height;
+                        bool flag_IsMergedCell = cell.IsMergedCell;
+
+                        if (flag_IsMergedCell)
+                        {
+                            sheet.NPOI_IsMergeCell(r, c, ref cellValue);
+                        }
+                        else
+                        {
+                            cellValue.RowStart = r;
+                            cellValue.RowEnd = r;
+                            cellValue.ColStart = c;
+                            cellValue.ColEnd = c;
+                            cellValue.Slave = false;
+                        }
+                        CellValue cellValue_buf = sheetClass.SortCellValue(cellValue.RowStart, cellValue.RowEnd, cellValue.ColStart, cellValue.ColEnd);
+                        if (cellValue_buf == null && flag_IsMergedCell == true)
+                        {
+
+                            ICell cell_end = sheet.GetRow(cellValue.RowEnd).GetCell(cellValue.ColEnd);
+                            cell.CellStyle.BorderRight = cell_end.CellStyle.BorderRight;
+                            cell.CellStyle.BorderBottom = cell_end.CellStyle.BorderBottom;
+                            cellValue.Slave = false;
+                        }
+                        else if (cellValue_buf != null && flag_IsMergedCell == true)
+                        {
+                            cellValue.RowStart = r;
+                            cellValue.RowEnd = r;
+                            cellValue.ColStart = c;
+                            cellValue.ColEnd = c;
+                            cellValue.Slave = true;
+                        }
+
+
+                        MyCellStyle myCellStyle = MyCellStyle.ToMyCellStyle(workbook, cell.CellStyle);
+                        sheetClass.Add(cellValue, myCellStyle);
+
+                    }
+                }
+                result = sheetClass.JsonSerializationt(false);
+                //Console.WriteLine($"{result}");
+                fs.Close();
+                fs.Dispose();
+                workbook.Close();
+                Console.WriteLine($"讀檔耗時{myTimerBasic.ToString()}");
+            }
+            catch
+            {
+                Console.WriteLine($"NPOI_LoadHeader 檔案已開啟!無法讀取!");
+                return "[]";
+            }
+            finally
+            {
+
+            }
+
+
+            return result;
+        }
+
 
         public static DataTable NPOI_LoadFile(byte[] bytes , string fileExt = ".xlsx")
         {
