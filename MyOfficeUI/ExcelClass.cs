@@ -1089,7 +1089,7 @@ namespace MyOffice
         }
         public static byte[] NPOI_GetBytes(this string json , Excel_Type excel_Type)
         {
-            Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
+            Basic.MyTimerBasic myTimerBasic = new Basic.MyTimerBasic(100000);
             myTimerBasic.StartTickTime();
             SheetClass sheetClass = json.JsonDeserializet<SheetClass>();
             if (sheetClass == null) return null;
@@ -1155,7 +1155,7 @@ namespace MyOffice
         }
         public static byte[] NPOI_GetBytes(this List<SheetClass> sheetClasses, Excel_Type excel_Type)
         {
-            Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
+            Basic.MyTimerBasic myTimerBasic = new Basic.MyTimerBasic(100000);
             myTimerBasic.StartTickTime();
 
 
@@ -1211,6 +1211,37 @@ namespace MyOffice
 
             return buf;
             Console.WriteLine($"存檔耗時{myTimerBasic.ToString()}");
+        }
+
+        public static SheetClass NPOI_GetSheetClass(this System.Data.DataTable dt)
+        {
+            return NPOI_GetSheetClass(dt, 3000);
+        }
+        public static SheetClass NPOI_GetSheetClass(this System.Data.DataTable dt , int col_width)
+        {
+            SheetClass sheetClass = new SheetClass();
+            int row_index = 0;
+            for(int i = 0; i < dt.Columns.Count; i++)
+            {
+                sheetClass.ColumnsWidth.Add(3000);
+            }
+            for (int c = 0; c < dt.Columns.Count; c++)
+            {
+                sheetClass.ColumnsWidth.Add(3000);
+                sheetClass.AddNewCell(row_index, c, $"{dt.Columns[c].ColumnName}", new Font("微軟正黑體", 12));       
+            }
+            row_index++;
+            for (int r = 0; r < dt.Rows.Count; r++)
+            {
+                for (int c = 0; c < dt.Columns.Count; c++)
+                {
+                    sheetClass.ColumnsWidth.Add(3000);
+                    sheetClass.AddNewCell(row_index, c, $"{dt.Rows[r][c].ToString()}", new Font("微軟正黑體", 12));
+                }
+                row_index++;
+            }
+
+            return sheetClass;
         }
 
         public static void NPOI_SaveFile(this System.Data.DataTable dt, string filepath, params int[] int_col_ary)
@@ -1280,7 +1311,7 @@ namespace MyOffice
         }
         public static void NPOI_SaveFile(this List<SheetClass> sheetClasses, string file)
         {
-            Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
+            Basic.MyTimerBasic myTimerBasic = new Basic.MyTimerBasic(100000);
             myTimerBasic.StartTickTime();
 
          
@@ -1351,7 +1382,7 @@ namespace MyOffice
         }
         public static void NPOI_SaveFile(this string json, string file)
         {
-            Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
+            Basic.MyTimerBasic myTimerBasic = new Basic.MyTimerBasic(100000);
             myTimerBasic.StartTickTime();
             SheetClass sheetClass = json.JsonDeserializet<SheetClass>();
             if (sheetClass == null) return;
@@ -1426,7 +1457,7 @@ namespace MyOffice
         }
         public static string NPOI_LoadSheetsToJson(this string file)
         {
-            Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
+            Basic.MyTimerBasic myTimerBasic = new Basic.MyTimerBasic(100000);
             myTimerBasic.StartTickTime();
 
             string result = "";
@@ -1527,7 +1558,7 @@ namespace MyOffice
         }
         public static string NPOI_LoadSheetsToJson(byte[] bytes, string fileExt = ".xlsx")
         {
-            Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
+            Basic.MyTimerBasic myTimerBasic = new Basic.MyTimerBasic(100000);
             myTimerBasic.StartTickTime();
 
             string result = "";
@@ -1627,7 +1658,7 @@ namespace MyOffice
         }
         public static string NPOI_LoadSheetToJson(this string file)
         {
-            Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
+            Basic.MyTimerBasic myTimerBasic = new Basic.MyTimerBasic(100000);
             myTimerBasic.StartTickTime();
 
             string result = "";
@@ -1722,7 +1753,7 @@ namespace MyOffice
         }
         public static string NPOI_LoadSheetToJson(byte[] bytes, string fileExt = ".xlsx")
         {
-            Basic.Time.MyTimerBasic myTimerBasic = new Time.MyTimerBasic(100000);
+            Basic.MyTimerBasic myTimerBasic = new Basic.MyTimerBasic(100000);
             myTimerBasic.StartTickTime();
 
             string result = "";
