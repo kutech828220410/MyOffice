@@ -1257,6 +1257,7 @@ namespace MyOffice
                             }
                             else
                             {
+                                cellValue.IsDouble = true;
                                 cellValue.Text = "0";
                                 break;
                             }
