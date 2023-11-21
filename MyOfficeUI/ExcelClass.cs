@@ -604,12 +604,12 @@ namespace MyOffice
         {
             this.AddNewCell_Webapi(Row, Row, Col, Col, text, FontName, FontHeightInPoints, IsBold, foreColor, height, horizontalAlignment, verticalAlignment, BS, BS, BS, BS);
         }
-        public void AddNewCell_Webapi(int RowStart, int RowEnd, int ColStart, int ColEnd, string text, string FontName, float FontHeightInPoints, bool IsBold, NPOI_Color foreColor, int height = 0, HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center, VerticalAlignment verticalAlignment = VerticalAlignment.Center, BorderStyle BS = BorderStyle.Thin)
+        public CellValue AddNewCell_Webapi(int RowStart, int RowEnd, int ColStart, int ColEnd, string text, string FontName, float FontHeightInPoints, bool IsBold, NPOI_Color foreColor, int height = 0, HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center, VerticalAlignment verticalAlignment = VerticalAlignment.Center, BorderStyle BS = BorderStyle.Thin)
         {
-            this.AddNewCell_Webapi(RowStart, RowEnd, ColStart, ColEnd, text, FontName, FontHeightInPoints, IsBold, foreColor, height, horizontalAlignment, verticalAlignment, BS, BS, BS, BS);
+           return this.AddNewCell_Webapi(RowStart, RowEnd, ColStart, ColEnd, text, FontName, FontHeightInPoints, IsBold, foreColor, height, horizontalAlignment, verticalAlignment, BS, BS, BS, BS);
         }
 
-        public void AddNewCell_Webapi(int RowStart, int RowEnd, int ColStart, int ColEnd, string text, string FontName , float FontHeightInPoints , bool IsBold, NPOI_Color foreColor, int height = 0, HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center, VerticalAlignment verticalAlignment = VerticalAlignment.Center, BorderStyle BS_top = BorderStyle.Thin, BorderStyle BS_bottom = BorderStyle.Thin, BorderStyle BS_left = BorderStyle.Thin, BorderStyle BS_right = BorderStyle.Thin)
+        public CellValue AddNewCell_Webapi(int RowStart, int RowEnd, int ColStart, int ColEnd, string text, string FontName , float FontHeightInPoints , bool IsBold, NPOI_Color foreColor, int height = 0, HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center, VerticalAlignment verticalAlignment = VerticalAlignment.Center, BorderStyle BS_top = BorderStyle.Thin, BorderStyle BS_bottom = BorderStyle.Thin, BorderStyle BS_left = BorderStyle.Thin, BorderStyle BS_right = BorderStyle.Thin)
         {
             CellValue cellValue = new CellValue();
             MyCellStyle myCellStyle = new MyCellStyle();
@@ -635,6 +635,7 @@ namespace MyOffice
             myCellStyle.BorderRight = BS_right;
 
             this.Add(cellValue, myCellStyle);
+            return cellValue;
         }
         public void NewCell_Webapi_Buffer_Clear()
         {
@@ -858,6 +859,7 @@ namespace MyOffice
         private int colEnd = 0;
         private bool slave = false;
         private short height = 0;
+        private bool isDouble = false;
 
         private int cellStyle_index;
         public string Text { get => text; set => text = value; }
@@ -868,6 +870,7 @@ namespace MyOffice
         public int CellStyle_index { get => cellStyle_index; set => cellStyle_index = value; }
         public bool Slave { get => slave; set => slave = value; }
         public short Height { get => height; set => height = value; }
+        public bool IsDouble { get => isDouble; set => isDouble = value; }
     }
    
     [Serializable]
@@ -1187,7 +1190,15 @@ namespace MyOffice
                 {
                     CellValue cellValue = sheetClass.CellValues[i];
                     ICell cell = sheet.GetRow(cellValue.RowStart).GetCell(cellValue.ColStart);
-                    cell.SetCellValue(cellValue.Text);
+                    if(cellValue.IsDouble)
+                    {
+                        cell.SetCellValue(cellValue.Text.StringToDouble());
+                    }
+                    else
+                    {
+                        cell.SetCellValue(cellValue.Text);
+                    }
+                   
                     cell.CellStyle = sheetClass.GetICellStyle(cellValue.CellStyle_index);
 
                 }
@@ -1213,30 +1224,45 @@ namespace MyOffice
             Console.WriteLine($"存檔耗時{myTimerBasic.ToString()}");
         }
 
-        public static SheetClass NPOI_GetSheetClass(this System.Data.DataTable dt)
+        public static SheetClass NPOI_GetSheetClass(this System.Data.DataTable dt, params int[] int_col_ary)
         {
-            return NPOI_GetSheetClass(dt, 3000);
+            return NPOI_GetSheetClass(dt, 3000 , int_col_ary);
         }
-        public static SheetClass NPOI_GetSheetClass(this System.Data.DataTable dt , int col_width)
+        public static SheetClass NPOI_GetSheetClass(this System.Data.DataTable dt , int col_width, params int[] int_col_ary)
         {
             SheetClass sheetClass = new SheetClass();
             int row_index = 0;
             for(int i = 0; i < dt.Columns.Count; i++)
             {
-                sheetClass.ColumnsWidth.Add(3000);
             }
             for (int c = 0; c < dt.Columns.Count; c++)
             {
-                sheetClass.ColumnsWidth.Add(3000);
-                sheetClass.AddNewCell(row_index, c, $"{dt.Columns[c].ColumnName}", new Font("微軟正黑體", 12));       
+                CellValue cellValue = sheetClass.AddNewCell_Webapi(row_index, row_index, c, c, $"{dt.Columns[c].ColumnName}", "微軟正黑體", 12, false, NPOI_Color.BLACK, 430, NPOI.SS.UserModel.HorizontalAlignment.Left, NPOI.SS.UserModel.VerticalAlignment.Bottom, NPOI.SS.UserModel.BorderStyle.Thin);
+            
             }
             row_index++;
             for (int r = 0; r < dt.Rows.Count; r++)
             {
                 for (int c = 0; c < dt.Columns.Count; c++)
                 {
-                    sheetClass.ColumnsWidth.Add(3000);
-                    sheetClass.AddNewCell(row_index, c, $"{dt.Rows[r][c].ToString()}", new Font("微軟正黑體", 12));
+                    CellValue cellValue = sheetClass.AddNewCell_Webapi(row_index, row_index, c, c, $"{dt.Rows[r][c].ToString()}", "微軟正黑體", 12, false, NPOI_Color.BLACK, 430, NPOI.SS.UserModel.HorizontalAlignment.Left, NPOI.SS.UserModel.VerticalAlignment.Bottom, NPOI.SS.UserModel.BorderStyle.Thin);
+                    for (int k = 0; k < int_col_ary.Length; k++)
+                    {
+                        if (int_col_ary[k] == c)
+                        {
+                            if (cellValue.Text.ObjectToString().StringIsEmpty() == false)
+                            {
+                                cellValue.IsDouble = true;
+                                break;
+                            }
+                            else
+                            {
+                                cellValue.Text = "0";
+                                break;
+                            }
+
+                        }
+                    }
                 }
                 row_index++;
             }
@@ -1270,9 +1296,9 @@ namespace MyOffice
                     bool flag_is_double = false;
                     for (int k = 0; k < int_col_ary.Length; k++)
                     {
-                        if(int_col_ary[k] == j)
+                        if (int_col_ary[k] == j)
                         {
-                            if(dt.Rows[i][j].ObjectToString().StringIsEmpty() == false)
+                            if (dt.Rows[i][j].ObjectToString().StringIsEmpty() == false)
                             {
                                 cell.SetCellValue(dt.Rows[i][j].ObjectToString().StringToDouble());
                                 flag_is_double = true;
@@ -1284,10 +1310,10 @@ namespace MyOffice
                                 flag_is_double = true;
                                 break;
                             }
-                         
+
                         }
                     }
-                    if(!flag_is_double)cell.SetCellValue(dt.Rows[i][j].ToString());
+                    if (!flag_is_double) cell.SetCellValue(dt.Rows[i][j].ToString());
                 }
             }
 
