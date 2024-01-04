@@ -38,6 +38,7 @@
             this.comboBox_ExcelType = new System.Windows.Forms.ComboBox();
             this.saveFileDialog_SaveExcel = new System.Windows.Forms.SaveFileDialog();
             this.button_存檔Excel = new System.Windows.Forms.Button();
+            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.SuspendLayout();
             // 
             // button1
@@ -157,6 +158,7 @@
         private System.Windows.Forms.ComboBox comboBox_ExcelType;
         private System.Windows.Forms.SaveFileDialog saveFileDialog_SaveExcel;
         private System.Windows.Forms.Button button_存檔Excel;
+        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
     }
 }
 

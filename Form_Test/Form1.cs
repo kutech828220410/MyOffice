@@ -30,49 +30,16 @@ namespace Form_Test
 
         private void button1_Click(object sender, EventArgs e)
         {
-            DataTable dt = MyOffice.ExcelClass.LoadFile(@"C:\Users\User\Desktop\TEST.xlsx");
-            SheetClass sheetClass1 = dt.NPOI_GetSheetClass();
-            sheetClass1.NPOI_SaveFile(@"C:\Users\User\Desktop\TEST1.xlsx");
-
-            //List<SheetClass> sheetClasses = new List<SheetClass>();
-            //SheetClass sheetClass = new SheetClass("1");
-            //sheetClass.ColumnsWidth.Add(10000);
-            //sheetClass.ColumnsWidth.Add(10000);
-            //sheetClass.ColumnsWidth.Add(10000);
-            //sheetClass.ColumnsWidth.Add(10000);
-            //for (int col = 0; col < 4; col++)
-            //{
-            //    for (int row = 0; row < 8; row++)
-            //    {
-            //        sheetClass.AddNewCell(row, col, $"A{col}-{row}", new Font("微軟正黑體", 14));
-            //    }
-            //}
-            //for (int i = 0; i < sheetClass.Rows.Count; i++)
-            //{
-            //    sheetClass.Rows[i].Height = 1000;
-            //}
-            //sheetClasses.Add(sheetClass);
-            //sheetClass = new SheetClass("2");
-            //sheetClass.ColumnsWidth.Add(10000);
-            //sheetClass.ColumnsWidth.Add(10000);
-            //sheetClass.ColumnsWidth.Add(10000);
-            //sheetClass.ColumnsWidth.Add(10000);
-            //for (int col = 0; col < 4; col++)
-            //{
-            //    for (int row = 0; row < 8; row++)
-            //    {
-            //        sheetClass.AddNewCell(row, col, $"B{col}-{row}", new Font("微軟正黑體", 14));
-            //    }
-            //}
-            //for (int i = 0; i < sheetClass.Rows.Count; i++)
-            //{
-            //    sheetClass.Rows[i].Height = 1000;
-            //}
-            //sheetClasses.Add(sheetClass);
-            //sheetClasses.NPOI_SaveFile(@"C:\Users\User\Desktop\TEST.xlsx");
-
-
-            //List<SheetClass> sheetClasses_buf = MyOffice.ExcelClass.NPOI_LoadToSheetClasses(@"C:\Users\User\Desktop\TEST.xlsx");
+            string path = "";
+            if(this.folderBrowserDialog1.ShowDialog() == DialogResult.OK)
+            {
+                path = this.folderBrowserDialog1.SelectedPath;
+                MyOffice.ExcelClass.NPOI_SaveFiles2Folder(@"C:\Users\User\Desktop\屏東榮總0105盤點表\盤點總表.xls", path);
+                MyMessageBox.ShowDialog("完成!");
+            }
+          
+   
+            
         }
 
 

@@ -958,10 +958,12 @@ namespace MyOffice
                 oleda = new OleDbDataAdapter(cmd);
                 oleda.Fill(ds, "excelData");
                 dtResult = ds.Tables["excelData"];
+                dt.TableName = sheetName;
                 objConn.Close();
                 return dtResult; //Returning Dattable  
             }
         }
+     
         public static void SaveFile(this System.Data.DataTable dataTable, string filepath)
         {
             try
@@ -1515,6 +1517,7 @@ namespace MyOffice
                             ICell cell = sheet.GetRow(r).GetCell(c);
 
                             object obj = NPOI_GetValueType(cell);
+                            if (cell == null || obj == null) continue;
                             if (obj != null)
                             {
                                 cellValue.Text = obj.ObjectToString();
@@ -1983,6 +1986,95 @@ namespace MyOffice
                 return null;
             }        
         }
+        public static List<DataTable> NPOI_LoadFile2DataTables(this string file)
+        {
+            List<DataTable> dataTables = new List<DataTable>();
+            Basic.MyTimerBasic myTimerBasic = new Basic.MyTimerBasic(100000);
+            myTimerBasic.StartTickTime();
+
+            NPOI.SS.UserModel.IWorkbook workbook;
+            string fileExt = Path.GetExtension(file).ToLower();
+            try
+            {
+                FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read);
+                if (fileExt == ".xlsx") { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(fs); } else if (fileExt == ".xls") { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(fs); } else { workbook = null; }
+                if (workbook == null) { return null; }
+                for (int num = 0; num < workbook.NumberOfSheets; num++)
+                {
+                    DataTable dt = new DataTable();
+                    NPOI.SS.UserModel.ISheet sheet = workbook.GetSheetAt(num);
+                    List<ICell> cells = new List<ICell>();
+                    dt.TableName = sheet.SheetName;
+                    //表头
+                    NPOI.SS.UserModel.IRow header = sheet.GetRow(sheet.FirstRowNum);
+                    List<int> columns = new List<int>();
+                    for (int i = 0; i < header.LastCellNum; i++)
+                    {
+                        object obj = NPOI_GetValueType(header.GetCell(i));
+                        if (obj == null || obj.ToString() == string.Empty)
+                        {
+                            dt.Columns.Add(new DataColumn("Columns" + i.ToString()));
+                        }
+                        else
+                        {
+                            dt.Columns.Add(new DataColumn(obj.ToString()));
+                        }
+                        columns.Add(i);
+                    }
+                    //数据
+                    for (int i = sheet.FirstRowNum + 1; i <= sheet.LastRowNum; i++)
+                    {
+                        DataRow dr = dt.NewRow();
+                        bool hasValue = false;
+                        foreach (int j in columns)
+                        {
+                            dr[j] = NPOI_GetValueType(sheet.GetRow(i).GetCell(j));
+                            if (dr[j] != null && dr[j].ToString() != string.Empty)
+                            {
+                                hasValue = true;
+                            }
+                        }
+                        if (hasValue)
+                        {
+                            dt.Rows.Add(dr);
+                        }
+                    }
+                    dataTables.Add(dt);
+
+                }
+                fs.Close();
+                fs.Dispose();
+                workbook.Close();
+                Console.WriteLine($"讀檔耗時{myTimerBasic.ToString()}");
+
+            }
+            catch
+            {
+                Console.WriteLine($"NPOI_LoadHeader 檔案已開啟!無法讀取! , 位置 : {file}");
+                return dataTables;
+            }
+            finally
+            {
+
+            }
+            return dataTables;
+        }
+        public static void NPOI_SaveFiles2Folder(this string file, string path, string fileExt = ".xls")
+        {
+            List<DataTable> dataTables = NPOI_LoadFile2DataTables(file);
+            NPOI_SaveDataTables2Folder(dataTables, path);
+        }
+        public static void NPOI_SaveDataTables2Folder(this List<DataTable> dataTables, string path, string fileExt = ".xls")
+        {
+            for (int i = 0; i < dataTables.Count; i++)
+            {
+                string name = dataTables[i].TableName;
+                string filename = $@"{path}\{name}{fileExt}";
+                dataTables[i].NPOI_SaveFile(filename);
+            }
+        }
+
+
         private static object NPOI_GetValueType(this NPOI.SS.UserModel.ICell cell)
         {
             if (cell == null)
