@@ -34,8 +34,8 @@ namespace Form_Test
             if(this.folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
                 path = this.folderBrowserDialog1.SelectedPath;
-                MyOffice.ExcelClass.NPOI_SaveFiles2Folder(@"C:\Users\User\Desktop\屏東榮總0105盤點表\盤點總表.xls", path);
-                MyMessageBox.ShowDialog("完成!");
+                MyOffice.ExcelClass.NPOI_SaveFiles2Folder(@"C:\Users\User\Desktop\屏東榮總0105盤點表\藥庫\藥庫盤點表綜整_1130103_匯入盤點系統用.xlsx", path);
+                MessageBox.Show("完成!");
             }
           
    

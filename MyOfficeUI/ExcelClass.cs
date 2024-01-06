@@ -1088,6 +1088,76 @@ namespace MyOffice
             stream.Dispose();
             return buf;
         }
+        public static byte[] NPOI_GetBytes(List<DataTable> dts, params int[] int_col_ary)
+        {
+            NPOI.SS.UserModel.IWorkbook workbook;
+            workbook = new NPOI.HSSF.UserModel.HSSFWorkbook();
+            if (workbook == null) { return null; }
+            for (int m = 0; m < dts.Count; m++)
+            {
+                DataTable dt = dts[m];
+                NPOI.SS.UserModel.ISheet sheet = string.IsNullOrEmpty(dt.TableName) ? workbook.CreateSheet("Sheet1") : workbook.CreateSheet(dt.TableName);
+
+                //表头  
+                NPOI.SS.UserModel.IRow row = sheet.CreateRow(0);
+                for (int i = 0; i < dt.Columns.Count; i++)
+                {
+                    NPOI.SS.UserModel.ICell cell = row.CreateCell(i);
+                    cell.SetCellValue(dt.Columns[i].ColumnName);
+                }
+
+                //数据  
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    NPOI.SS.UserModel.IRow row1 = sheet.CreateRow(i + 1);
+                    for (int j = 0; j < dt.Columns.Count; j++)
+                    {
+                        NPOI.SS.UserModel.ICell cell = row1.CreateCell(j);
+                        cell.SetCellValue(dt.Rows[i][j].ToString());
+                        bool flag_is_double = false;
+                        for (int k = 0; k < int_col_ary.Length; k++)
+                        {
+                            if (int_col_ary[k] == j)
+                            {
+                                if (dt.Rows[i][j].ObjectToString().StringIsEmpty() == false)
+                                {
+                                    cell.SetCellValue(dt.Rows[i][j].ObjectToString().StringToDouble());
+                                    flag_is_double = true;
+                                    break;
+                                }
+                                else
+                                {
+                                    cell.SetCellValue(0);
+                                    flag_is_double = true;
+                                    break;
+                                }
+
+                            }
+                        }
+                        if (!flag_is_double)
+                        {
+                            if (j == 0)
+                            {
+                                cell.SetCellValue(dt.Rows[i][j].ObjectToString().StringToInt32().ToString("00000"));
+                            }
+                            else
+                            {
+                                cell.SetCellValue(dt.Rows[i][j].ToString());
+                            }
+
+                        }
+                    }
+                }
+            }
+          
+
+            //转为字节数组  
+            MemoryStream stream = new MemoryStream();
+            workbook.Write(stream);
+            var buf = stream.ToArray();
+            stream.Dispose();
+            return buf;
+        }
         public static byte[] NPOI_GetBytes(this string json)
         {
             return NPOI_GetBytes(json, Excel_Type.xls);
@@ -1316,7 +1386,18 @@ namespace MyOffice
 
                         }
                     }
-                    if (!flag_is_double) cell.SetCellValue(dt.Rows[i][j].ToString());
+                    if (!flag_is_double)
+                    {
+                        if(j == 0)
+                        {
+                            cell.SetCellValue(dt.Rows[i][j].ObjectToString().StringToInt32().ToString("00000"));
+                        }
+                        else
+                        {
+                            cell.SetCellValue(dt.Rows[i][j].ToString());
+                        }
+                        
+                    }
                 }
             }
 
@@ -2059,18 +2140,18 @@ namespace MyOffice
             }
             return dataTables;
         }
-        public static void NPOI_SaveFiles2Folder(this string file, string path, string fileExt = ".xls")
+        public static void NPOI_SaveFiles2Folder(this string file, string path, string fileExt = ".xls", params int[] int_col_ary)
         {
             List<DataTable> dataTables = NPOI_LoadFile2DataTables(file);
-            NPOI_SaveDataTables2Folder(dataTables, path);
+            NPOI_SaveDataTables2Folder(dataTables, path, fileExt, int_col_ary);
         }
-        public static void NPOI_SaveDataTables2Folder(this List<DataTable> dataTables, string path, string fileExt = ".xls")
+        public static void NPOI_SaveDataTables2Folder(this List<DataTable> dataTables, string path, string fileExt = ".xls", params int[] int_col_ary)
         {
             for (int i = 0; i < dataTables.Count; i++)
             {
                 string name = dataTables[i].TableName;
                 string filename = $@"{path}\{name}{fileExt}";
-                dataTables[i].NPOI_SaveFile(filename);
+                dataTables[i].NPOI_SaveFile(filename, int_col_ary);
             }
         }
 
