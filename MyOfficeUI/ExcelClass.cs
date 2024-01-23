@@ -1388,15 +1388,16 @@ namespace MyOffice
                     }
                     if (!flag_is_double)
                     {
-                        if(j == 0)
-                        {
-                            cell.SetCellValue(dt.Rows[i][j].ObjectToString().StringToInt32().ToString("00000"));
-                        }
-                        else
-                        {
-                            cell.SetCellValue(dt.Rows[i][j].ToString());
-                        }
-                        
+                        cell.SetCellValue(dt.Rows[i][j].ToString());
+                        //if (j == 0)
+                        //{
+                        //    cell.SetCellValue(dt.Rows[i][j].ObjectToString().StringToInt32().ToString("00000"));
+                        //}
+                        //else
+                        //{
+                        //    cell.SetCellValue(dt.Rows[i][j].ToString());
+                        //}
+
                     }
                 }
             }
