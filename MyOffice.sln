@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.33529.622
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyOffice", "MyOfficeUI\MyOffice.csproj", "{78748D43-AE0C-42FC-9FC5-317AB8E9DF0B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Form_Test", "Form_Test\Form_Test.csproj", "{B0DB8E90-C8B2-4B36-A8CD-199AE550C1CE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Txt2Excel", "Txt2Excel\Txt2Excel.csproj", "{041E4102-9B6E-4002-A718-BCAD14C954DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,8 +23,15 @@ Global
 		{B0DB8E90-C8B2-4B36-A8CD-199AE550C1CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B0DB8E90-C8B2-4B36-A8CD-199AE550C1CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B0DB8E90-C8B2-4B36-A8CD-199AE550C1CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{041E4102-9B6E-4002-A718-BCAD14C954DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{041E4102-9B6E-4002-A718-BCAD14C954DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{041E4102-9B6E-4002-A718-BCAD14C954DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{041E4102-9B6E-4002-A718-BCAD14C954DF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D1548064-4E14-409B-9A71-A763C8BD1ECD}
 	EndGlobalSection
 EndGlobal
