@@ -12,6 +12,8 @@ using MyUI;
 using SQLUI;
 using Basic;
 using MyOffice;
+using NPOI.XWPF.UserModel;
+using System.IO;
 namespace Txt2Excel
 {
     public partial class Form1 : Form
@@ -92,21 +94,77 @@ namespace Txt2Excel
             {
                 string fileName = openFileDialog_LoadExcel.FileName;
 
-                string allText = Basic.MyFileStream.LoadFileAllText(fileName);
-                string input = allText;
-                string pattern = @"\r+";
-                string replacement = "\r";
-                string result = Regex.Replace(input, pattern, replacement);
+                string Extension = System.IO.Path.GetExtension(fileName);
+                if (Extension == ".txt")
+                {
+                    string allText = Basic.MyFileStream.LoadFileAllText(fileName);
+                    string input = allText;
+                    string pattern = @"\r+";
+                    string replacement = "\r";
+                    string result = Regex.Replace(input, pattern, replacement);
 
-                Console.WriteLine("Original string: " + input);
-                Console.WriteLine("String after merging \\r: " + result);
+                    Console.WriteLine("Original string: " + input);
+                    Console.WriteLine("String after merging \\r: " + result);
 
-                List<object[]> list_藥品資料 = ExtractDrugs(input, "藥品名稱:");
+                    List<object[]> list_藥品資料 = ExtractDrugs(input, "藥品名稱:");
 
 
-                sqL_DataGridView_藥品資料.RefreshGrid(list_藥品資料);
+                    
+                }
+                if (Extension == ".docx")
+                {
+                    FileStream fs = new FileStream(fileName, FileMode.Open);
+                    XWPFDocument doc = new XWPFDocument(fs);
+                    IList<XWPFParagraph> paragraphs = doc.Paragraphs;
+                    string allText = "";
+                    allText =  ExtractTextFromWord(fileName);
+            
+                    string input = allText;
+                    string pattern = @"\r+";
+                    string replacement = "\r";
+                    string result = Regex.Replace(input, pattern, replacement);
+
+                    Console.WriteLine("Original string: " + input);
+                    Console.WriteLine("String after merging \\r: " + result);
+
+                    List<object[]> list_藥品資料 = ExtractDrugs(input, "藥品名稱:");
+                    sqL_DataGridView_藥品資料.RefreshGrid(list_藥品資料);
+                }
+             
+
+
             }
 
+        }
+        static string ExtractTextFromWord(string filePath)
+        {
+            using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            {
+                XWPFDocument doc = new XWPFDocument(fs);
+                string text = "";
+
+                // 处理段落
+                foreach (XWPFParagraph paragraph in doc.Paragraphs)
+                {
+                    text += paragraph.Text + Environment.NewLine;
+                }
+
+                // 处理表格
+                foreach (XWPFTable table in doc.Tables)
+                {
+                    foreach (var row in table.Rows)
+                    {
+                        foreach (var cell in row.GetTableCells())
+                        {
+                            text += cell.GetText() + "\t";
+                        }
+                        text += Environment.NewLine;
+                    }
+                    text += Environment.NewLine;
+                }
+
+                return text;
+            }
         }
         private void Button_Savefile_Click(object sender, EventArgs e)
         {
@@ -142,7 +200,10 @@ namespace Txt2Excel
                     str_temp = replace(str_temp, "\r\n", "$");
                     str_temp = replace(str_temp, "\n\r", "$");
                     str_temp = replace(str_temp, "$", "$");
-
+                    str_temp = replace(str_temp, "\t", "$");
+                    string pattern = @"\$+";
+                    string replacement = "$";
+                    str_temp = Regex.Replace(str_temp, pattern, replacement);
                     list_str.Add(str_temp);
 
                     break;
@@ -155,7 +216,11 @@ namespace Txt2Excel
                     str_temp = replace(str_temp, "\r\n", "$");
                     str_temp = replace(str_temp, "\n", "$");
                     str_temp = replace(str_temp, "\n\r", "$");
-                    str_temp = replace(str_temp, "$", "$");
+                    str_temp = replace(str_temp, "\t", "$");
+                    string pattern = @"\$+";
+                    string replacement = "$";
+                    str_temp = Regex.Replace(str_temp, pattern, replacement);
+
 
                     list_str.Add(str_temp);
                     strart_index = next_index;

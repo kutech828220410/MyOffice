@@ -46,7 +46,7 @@ namespace Txt2Excel
             // openFileDialog_LoadExcel
             // 
             this.openFileDialog_LoadExcel.DefaultExt = "txt";
-            this.openFileDialog_LoadExcel.Filter = "txt File (*.txt)|*.txt;";
+            this.openFileDialog_LoadExcel.Filter = "Word File (*.docx)|*.docx|txt File (*.txt)|*.txt;";
             // 
             // button_Loadfile
             // 
