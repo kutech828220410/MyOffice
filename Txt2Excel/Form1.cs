@@ -178,7 +178,15 @@ namespace Txt2Excel
             }
         }
         static Regex drugRegex = new Regex(@"藥品名稱:\s*(.*?)\s*\[.*?\]", RegexOptions.Singleline);
-
+        static string RemoveSpacesBetweenChineseCharacters(string input, string str)
+        {
+            return RemoveSpacesBetweenChineseCharacters(input, str.ToArray());
+        }
+        static string RemoveSpacesBetweenChineseCharacters(string input, params char[] characters)
+        {
+            string pattern = string.Join(@"[\t\s]+", characters); // 修改正则表达式模式
+            return Regex.Replace(input, pattern, match => match.Value.Replace(" ", "").Replace("\t", ""));
+        }
         static List<object[]> ExtractDrugs(string text , string regxStr)
         {
             List<object[]> temp = new List<object[]>();
@@ -188,39 +196,65 @@ namespace Txt2Excel
             int strart_index = 0;
             int endIndex = 0;
             List<string> list_str = new List<string>();
-
-            while(true)
+            text = RemoveSpacesBetweenChineseCharacters(text, "藥品名稱:");
+            text = RemoveSpacesBetweenChineseCharacters(text, "中文名稱:");
+            text = RemoveSpacesBetweenChineseCharacters(text, "藥品代碼:");
+            text = RemoveSpacesBetweenChineseCharacters(text, "廠牌:");
+            text = RemoveSpacesBetweenChineseCharacters(text, "處置代碼:");
+            text = RemoveSpacesBetweenChineseCharacters(text, "健保價:");
+            text = RemoveSpacesBetweenChineseCharacters(text, "成份及含量:");
+            text = RemoveSpacesBetweenChineseCharacters(text, "成分及含量:");
+            text = RemoveSpacesBetweenChineseCharacters(text, "用法及用量:");
+            text = RemoveSpacesBetweenChineseCharacters(text, "適應症");
+            text = RemoveSpacesBetweenChineseCharacters(text, "副作用:");
+            text = RemoveSpacesBetweenChineseCharacters(text, "適應症:");
+            text = RemoveSpacesBetweenChineseCharacters(text, "注意事項:");
+            text = RemoveSpacesBetweenChineseCharacters(text, "懷孕用藥級:");
+            
+            while (true)
             {
                 int Index = text.IndexOf($"藥品名稱:", strart_index);
                 int next_index = text.IndexOf($"藥品名稱:", Index + 1);
                 if (next_index == -1)
                 {
                     string str_temp = text.Substring(Index, text.Length - Index);
-                    str_temp = replace(str_temp, "\r", "$");
+                
+                    str_temp = Regex.Replace(str_temp, @"\r+", "\r");
+                    str_temp = Regex.Replace(str_temp, @"\n+", "\n");
+                    str_temp = Regex.Replace(str_temp, @"\t+", "\t");
                     str_temp = replace(str_temp, "\r\n", "$");
                     str_temp = replace(str_temp, "\n\r", "$");
                     str_temp = replace(str_temp, "$", "$");
                     str_temp = replace(str_temp, "\t", "$");
+                    str_temp = replace(str_temp, ": ", ":$");
                     string pattern = @"\$+";
                     string replacement = "$";
                     str_temp = Regex.Replace(str_temp, pattern, replacement);
+                    str_temp = Regex.Replace(str_temp, @":\t+", ":$");
+                    str_temp = Regex.Replace(str_temp, @":\s+", ":$");
                     list_str.Add(str_temp);
-
+   
                     break;
                 }
                 else
                 {
                
                     string str_temp = text.Substring(Index, next_index - Index);
-                    str_temp = replace(str_temp, "\r", "$");
+                    if (str_temp.Contains("景安"))
+                    {
+                    }
+                    str_temp = Regex.Replace(str_temp, @"\r+", "\r");
+                    str_temp = Regex.Replace(str_temp, @"\n+", "\n");
+                    str_temp = Regex.Replace(str_temp, @"\t+", "\t");
                     str_temp = replace(str_temp, "\r\n", "$");
-                    str_temp = replace(str_temp, "\n", "$");
                     str_temp = replace(str_temp, "\n\r", "$");
+                    str_temp = replace(str_temp, "$", "$");
                     str_temp = replace(str_temp, "\t", "$");
+                    str_temp = replace(str_temp, ": ", ":$");
                     string pattern = @"\$+";
                     string replacement = "$";
                     str_temp = Regex.Replace(str_temp, pattern, replacement);
-
+                    str_temp = Regex.Replace(str_temp, @":[\t\s]+", ":$");
 
                     list_str.Add(str_temp);
                     strart_index = next_index;
@@ -232,13 +266,14 @@ namespace Txt2Excel
       
                 string GUID = Guid.NewGuid().ToString();
                 string 藥品名稱 = GetValue(str, "藥品名稱:");
-                string 中文名稱 = GetValue(str, "中文名稱:");
+                string 中文名稱 = GetValue(str, "中文名稱:"); 
                 string 藥品代碼 = GetValue(str, "藥品代碼:");
-                string 廠牌 = GetValue(str, "廠    牌:");
+                string 廠牌 = GetValue(str, "廠牌:");
                 string 成份及含量 = GetValue(str, "成份及含量:");
+                if(成份及含量.StringIsEmpty()) 成份及含量 = GetValue(str, "成分及含量:");
                 string 用法及用量 = GetValue(str, "用法及用量:");
-                string 適應症 = GetValue(str, "適 應 症:");
-                string 副作用 = GetValue(str, "副 作 用:");
+                string 適應症 = GetValue(str, "適應症:");
+                string 副作用 = GetValue(str, "副作用:");
                 string 注意事項 = GetValue(str, "注意事項:");
                 string 懷孕用藥級 = GetValue(str, "懷孕用藥級:");
 
@@ -253,10 +288,10 @@ namespace Txt2Excel
             string temp = "";
    
             int index_ex = text.IndexOf(":$", index + title.Length);
-            int Each_index = text.IndexOf("contains :$", index + title.Length);
-            if(Each_index >= 0 && title == "成份及含量:")
+            int Each_index = text.IndexOf(":$", index + title.Length);
+            if(Each_index >= 0 && title == "成份及含量:" && title == "成分及含量:")
             {
-                index_ex = text.IndexOf(":$", Each_index + "contains :$".Length);
+                index_ex = text.IndexOf(":$", Each_index + ":$".Length);
             }
             if(title == "懷孕用藥級:")
             {
@@ -265,26 +300,36 @@ namespace Txt2Excel
             if (index_ex >= 0 && index >= 0)
             {
                 temp = text.Substring(index, index_ex - index);
-
+             
                 temp = temp.Replace("藥品名稱", "");
+                temp = temp.Replace("處 置 代 碼", "");
                 temp = temp.Replace("處置代碼", "");
+                temp = temp.Replace("單    位", "");
+                temp = temp.Replace("單位", "");
                 temp = temp.Replace("中文名稱", "");
                 temp = temp.Replace("藥品代碼", "");
                 temp = temp.Replace("廠    牌", "");
-                temp = temp.Replace("健 保 價", "");
+                temp = temp.Replace("廠牌", "");
+                temp = temp.Replace("健保價", "");
                 temp = temp.Replace("成份及含量", "");
+                temp = temp.Replace("成分及含量", "");
                 temp = temp.Replace("用法及用量", "");
-                temp = temp.Replace("適 應 症", "");
-                temp = temp.Replace("副 作 用", "");
+                temp = temp.Replace("適應症", "");
+                temp = temp.Replace("副作用", "");
                 temp = temp.Replace("注意事項", "");
                 temp = temp.Replace("懷孕用藥級", "");
                 temp = temp.Replace(":$", "");
+                if (temp.Length < 1)
+                {
+                    return "";
+                }
                 if (temp.Substring(0, 1) == "$")
                 {
                     temp = temp.Remove(0, 1);
                 }
                 temp = temp.Replace("$", " ");
                 result = temp.Trim();
+   
             }
             return result;
         }

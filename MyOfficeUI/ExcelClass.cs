@@ -1088,10 +1088,15 @@ namespace MyOffice
             stream.Dispose();
             return buf;
         }
+
         public static byte[] NPOI_GetBytes(List<DataTable> dts, params int[] int_col_ary)
         {
+            return NPOI_GetBytes(dts, Excel_Type.xls, int_col_ary);
+        }
+        public static byte[] NPOI_GetBytes(List<DataTable> dts, Excel_Type excel_Type, params int[] int_col_ary)
+        {
             NPOI.SS.UserModel.IWorkbook workbook;
-            workbook = new NPOI.HSSF.UserModel.HSSFWorkbook();
+            if (excel_Type == Excel_Type.xlsx) { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(); } else if (excel_Type == Excel_Type.xls) { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(); } else { workbook = null; }
             if (workbook == null) { return null; }
             for (int m = 0; m < dts.Count; m++)
             {
@@ -1149,7 +1154,7 @@ namespace MyOffice
                     }
                 }
             }
-          
+
 
             //转为字节数组  
             MemoryStream stream = new MemoryStream();
@@ -1158,6 +1163,7 @@ namespace MyOffice
             stream.Dispose();
             return buf;
         }
+   
         public static byte[] NPOI_GetBytes(this string json)
         {
             return NPOI_GetBytes(json, Excel_Type.xls);
