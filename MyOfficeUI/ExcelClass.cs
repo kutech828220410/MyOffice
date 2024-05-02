@@ -1055,7 +1055,7 @@ namespace MyOffice
         {
             return NPOI_GetBytes(dt, Excel_Type.xls);
         }
-        public static byte[] NPOI_GetBytes(this System.Data.DataTable dt, Excel_Type excel_Type)
+        public static byte[] NPOI_GetBytes(this System.Data.DataTable dt, Excel_Type excel_Type, params int[] int_col_ary)
         {
             NPOI.SS.UserModel.IWorkbook workbook;
             if (excel_Type == Excel_Type.xlsx) { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(); } else if (excel_Type == Excel_Type.xls) { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(); } else { workbook = null; }
@@ -1078,6 +1078,30 @@ namespace MyOffice
                 {
                     NPOI.SS.UserModel.ICell cell = row1.CreateCell(j);
                     cell.SetCellValue(dt.Rows[i][j].ToString());
+                    bool flag_is_double = false;
+                    for (int k = 0; k < int_col_ary.Length; k++)
+                    {
+                        if (int_col_ary[k] == j)
+                        {
+                            if (dt.Rows[i][j].ObjectToString().StringIsEmpty() == false)
+                            {
+                                cell.SetCellValue(dt.Rows[i][j].ObjectToString().StringToDouble());
+                                flag_is_double = true;
+                                break;
+                            }
+                            else
+                            {
+                                cell.SetCellValue(0);
+                                flag_is_double = true;
+                                break;
+                            }
+
+                        }
+                    }
+                    if (!flag_is_double)
+                    {
+                        cell.SetCellValue(dt.Rows[i][j].ToString());
+                    }
                 }
             }
 
