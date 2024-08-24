@@ -124,7 +124,6 @@ C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Release\System.Value
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Release\Office.dll
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Release\Microsoft.Office.Interop.Excel.dll
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Release\Microsoft.Office.Interop.Word.dll
-C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\obj\Release\MyOffice.csproj.AssemblyReference.cache
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\obj\Release\MyOffice.csproj.ResolveComReference.cache
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\obj\Release\MyOffice.csproj.CoreCompileInputs.cache
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\obj\Release\MyOffice.csproj.CopyComplete

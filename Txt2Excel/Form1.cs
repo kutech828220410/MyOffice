@@ -369,5 +369,10 @@ namespace Txt2Excel
             Extracttext = Extracttext.Trim();
             return Extracttext;
         }
+
+        private void button_Loadfile_Click_1(object sender, EventArgs e)
+        {
+
+        }
     }
 }

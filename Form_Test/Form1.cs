@@ -64,6 +64,7 @@ namespace Form_Test
         {
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
+                MyOffice.ExcelClass.NPOI_LoadFile(openFileDialog1.FileName);
                 sheetClass = MyOffice.ExcelClass.NPOI_LoadToSheetClass(openFileDialog1.FileName);
                 this.textBox_Json.Text = sheetClass.JsonSerializationt(false);
             }
