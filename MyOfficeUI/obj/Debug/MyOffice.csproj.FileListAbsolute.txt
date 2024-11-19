@@ -39,7 +39,6 @@ C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Debug\System.Text.En
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Debug\System.Text.Json.xml
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Debug\System.Threading.Tasks.Extensions.xml
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Debug\System.ValueTuple.xml
-C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Debug\Office.dll
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Debug\Microsoft.Office.Interop.Excel.dll
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Debug\Microsoft.Office.Interop.Word.dll
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\obj\Debug\MyOffice.csproj.AssemblyReference.cache

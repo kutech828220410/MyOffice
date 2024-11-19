@@ -474,3 +474,4 @@ C:\Users\Administrator\source\repos\MyOffice\Form_Test\bin\Release\AxOvkMsr.dll
 C:\Users\Administrator\source\repos\MyOffice\Form_Test\bin\Release\MeasureSystemFunction.dll
 C:\Users\Administrator\source\repos\MyOffice\Form_Test\bin\Release\AxAltairUDrv.dll
 C:\Users\Administrator\source\repos\MyOffice\Form_Test\bin\Release\MVSDK.dll
+C:\Users\Administrator\source\repos\MyOffice\Form_Test\bin\Release\Newtonsoft.Json.dll

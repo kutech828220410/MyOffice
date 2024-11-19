@@ -179,3 +179,5 @@ C:\Users\Administrator\source\repos\MyOffice\MyOfficeUI\bin\Release\AxOvkMsr.dll
 C:\Users\Administrator\source\repos\MyOffice\MyOfficeUI\bin\Release\MeasureSystemFunction.dll
 C:\Users\Administrator\source\repos\MyOffice\MyOfficeUI\bin\Release\AxAltairUDrv.dll
 C:\Users\Administrator\source\repos\MyOffice\MyOfficeUI\bin\Release\MVSDK.dll
+C:\Users\Administrator\source\repos\MyOffice\MyOfficeUI\bin\Release\Newtonsoft.Json.dll
+C:\Users\Administrator\source\repos\MyOffice\MyOfficeUI\obj\Release\MyOffice.csproj.AssemblyReference.cache

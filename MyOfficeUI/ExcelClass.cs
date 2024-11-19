@@ -1057,6 +1057,28 @@ namespace MyOffice
         {
             return NPOI_GetBytes(dt, Excel_Type.xls);
         }
+        public static void NPOI_GetBytes(this System.Data.DataTable dt, Excel_Type excel_Type, Enum[] EnumcolName_ary)
+        {
+            List<string> colName_ary = new List<string>();
+            for (int i = 0; i < EnumcolName_ary.Length; i++)
+            {
+                colName_ary.Add(EnumcolName_ary[i].GetEnumName());
+            }
+            NPOI_GetBytes(dt, excel_Type, colName_ary.ToArray());
+        }
+        public static void NPOI_GetBytes(this System.Data.DataTable dt, Excel_Type excel_Type, string[] colName_ary)
+        {
+            List<int> list_int = new List<int>();
+            for (int i = 0; i < colName_ary.Length; i++)
+            {
+                int temp = dt.Columns.IndexOf(colName_ary[i]);
+                if (temp > 0)
+                {
+                    list_int.Add(temp);
+                }
+            }
+            NPOI_GetBytes(dt, excel_Type, list_int.ToArray());
+        }
         public static byte[] NPOI_GetBytes(this System.Data.DataTable dt, Excel_Type excel_Type, params int[] int_col_ary)
         {
             NPOI.SS.UserModel.IWorkbook workbook;
@@ -1133,10 +1155,43 @@ namespace MyOffice
                 return buf;
             }
         }
-
+        public static byte[] NPOI_LoadToBytes(string filename)
+        {
+            byte[] fileBytes = File.ReadAllBytes(filename);
+            return fileBytes;
+        }
+   
         public static byte[] NPOI_GetBytes(List<DataTable> dts, params int[] int_col_ary)
         {
             return NPOI_GetBytes(dts, Excel_Type.xls, int_col_ary);
+        }
+        public static byte[] NPOI_GetBytes(List<DataTable> dts, Excel_Type excel_Type, Enum[] EnumcolName_ary)
+        {
+            for (int i = 0; i < EnumcolName_ary.Length; i++)
+            {
+                foreach(DataTable dt in dts)
+                {
+                    if (dt.Columns.IndexOf(EnumcolName_ary[i].GetEnumName()) > 0)
+                    {
+                        dt.Columns[EnumcolName_ary[i].GetEnumName()].Caption = "double";
+                    }
+                }
+            }
+            return NPOI_GetBytes(dts, excel_Type);
+        }
+        public static byte[] NPOI_GetBytes(List<DataTable> dts, Excel_Type excel_Type, string[] colName_ary)
+        {
+            for (int i = 0; i < colName_ary.Length; i++)
+            {
+                foreach (DataTable dt in dts)
+                {
+                    if (dt.Columns.IndexOf(colName_ary[i]) > 0)
+                    {
+                        dt.Columns[colName_ary[i]].Caption = "double";
+                    }
+                }
+            }
+            return NPOI_GetBytes(dts, excel_Type);
         }
         public static byte[] NPOI_GetBytes(List<DataTable> dts, Excel_Type excel_Type, params int[] int_col_ary)
         {
@@ -1162,39 +1217,64 @@ namespace MyOffice
                     NPOI.SS.UserModel.IRow row1 = sheet.CreateRow(i + 1);
                     for (int j = 0; j < dt.Columns.Count; j++)
                     {
+  
                         NPOI.SS.UserModel.ICell cell = row1.CreateCell(j);
                         cell.SetCellValue(dt.Rows[i][j].ToString());
                         bool flag_is_double = false;
-                        for (int k = 0; k < int_col_ary.Length; k++)
+                        if(dt.Columns[j].Caption == "double")
                         {
-                            if (int_col_ary[k] == j)
+                            if (dt.Rows[i][j].ObjectToString().StringIsEmpty() == false)
                             {
-                                if (dt.Rows[i][j].ObjectToString().StringIsEmpty() == false)
+                                cell.SetCellValue(dt.Rows[i][j].ObjectToString().StringToDouble());
+                                flag_is_double = true;
+                            }
+                            else
+                            {
+                                cell.SetCellValue(0);
+                                flag_is_double = true;
+                            }
+                        }
+                        else
+                        {
+                            for (int k = 0; k < int_col_ary.Length; k++)
+                            {
+                                if (int_col_ary[k] == j)
                                 {
-                                    cell.SetCellValue(dt.Rows[i][j].ObjectToString().StringToDouble());
-                                    flag_is_double = true;
-                                    break;
+                                    if (dt.Rows[i][j].ObjectToString().StringIsEmpty() == false)
+                                    {
+                                        cell.SetCellValue(dt.Rows[i][j].ObjectToString().StringToDouble());
+                                        flag_is_double = true;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        cell.SetCellValue(0);
+                                        flag_is_double = true;
+                                        break;
+                                    }
+
+                                }
+                            }
+                        }
+                       
+                        if (!flag_is_double)
+                        {
+                            
+                            if (j == 0)
+                            {
+                                if (dt.Rows[i][j].ObjectToString().StringIsInt32())
+                                {
+                                    cell.SetCellValue(dt.Rows[i][j].ObjectToString().StringToInt32().ToString("00000"));
                                 }
                                 else
                                 {
-                                    cell.SetCellValue(0);
-                                    flag_is_double = true;
-                                    break;
-                                }
-
-                            }
-                        }
-                        if (!flag_is_double)
-                        {
-                            if (j == 0)
-                            {
-                                cell.SetCellValue(dt.Rows[i][j].ObjectToString().StringToInt32().ToString("00000"));
+                                    cell.SetCellValue(dt.Rows[i][j].ToString());
+                                }                       
                             }
                             else
                             {
                                 cell.SetCellValue(dt.Rows[i][j].ToString());
                             }
-
                         }
                     }
                 }
@@ -1347,6 +1427,28 @@ namespace MyOffice
             Console.WriteLine($"存檔耗時{myTimerBasic.ToString()}");
         }
 
+        public static SheetClass NPOI_GetSheetClass(this System.Data.DataTable dt, Enum[] EnumcolName_ary)
+        {
+            List<string> colName_ary = new List<string>();
+            for (int i = 0; i < EnumcolName_ary.Length; i++)
+            {
+                colName_ary.Add(EnumcolName_ary[i].GetEnumName());
+            }
+            return NPOI_GetSheetClass(dt, colName_ary.ToArray());
+        }
+        public static SheetClass NPOI_GetSheetClass(this System.Data.DataTable dt, string[] colName_ary)
+        {
+            List<int> list_int = new List<int>();
+            for (int i = 0; i < colName_ary.Length; i++)
+            {
+                int temp = dt.Columns.IndexOf(colName_ary[i]);
+                if (temp > 0)
+                {
+                    list_int.Add(temp);
+                }
+            }
+            return NPOI_GetSheetClass(dt, list_int.ToArray());
+        }
         public static SheetClass NPOI_GetSheetClass(this System.Data.DataTable dt, params int[] int_col_ary)
         {
             return NPOI_GetSheetClass(dt, 3000 , int_col_ary);
@@ -1394,6 +1496,28 @@ namespace MyOffice
             return sheetClass;
         }
 
+        public static void NPOI_SaveFile(this System.Data.DataTable dt, string filepath, Enum[] EnumcolName_ary)
+        {
+            List<string> colName_ary = new List<string>();
+            for (int i = 0; i < EnumcolName_ary.Length; i++)
+            {
+                colName_ary.Add(EnumcolName_ary[i].GetEnumName());
+            }
+            NPOI_SaveFile(dt, filepath, colName_ary.ToArray());
+        }
+        public static void NPOI_SaveFile(this System.Data.DataTable dt, string filepath, string[] colName_ary)
+        {
+            List<int> list_int = new List<int>();
+            for (int i = 0; i < colName_ary.Length; i++)
+            {
+                int temp = dt.Columns.IndexOf(colName_ary[i]);
+                if(temp > 0)
+                {
+                    list_int.Add(temp);
+                }
+            }
+            NPOI_SaveFile(dt, filepath, list_int.ToArray());
+        }
         public static void NPOI_SaveFile(this System.Data.DataTable dt, string filepath, params int[] int_col_ary)
         {
             NPOI.SS.UserModel.IWorkbook workbook;

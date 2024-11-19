@@ -84,7 +84,6 @@ C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\ICSharpCode.S
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\System.Numerics.Vectors.dll
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\System.Buffers.dll
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\office.dll
-C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\Microsoft.mshtml.dll
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\TCP.dll
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\CallBackUI.dll
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\AxOvkBase.dll
@@ -106,3 +105,4 @@ C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\obj\Release\Txt2Excel.csp
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\obj\Release\Txt2Excel.csproj.CopyComplete
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\obj\Release\Txt2Excel.exe
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\obj\Release\Txt2Excel.pdb
+C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\Newtonsoft.Json.dll
