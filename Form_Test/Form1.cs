@@ -25,8 +25,15 @@ namespace Form_Test
             this.button_讀取Excel.Click += Button_讀取Excel_Click;
             this.button_存檔Excel.Click += Button_存檔Excel_Click;
             this.button_API_GET.Click += Button_API_GET_Click;
+            this.button_Json解碼_new.Click += Button_Json解碼_new_Click;
         }
 
+        private void Button_Json解碼_new_Click(object sender, EventArgs e)
+        {
+            List<SheetClass> sheetClasses = this.textBox_Json.Text.JsonDeserializet<List<SheetClass>>();
+
+
+        }
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -64,9 +71,20 @@ namespace Form_Test
         {
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                MyOffice.ExcelClass.NPOI_LoadFile(openFileDialog1.FileName);
-                sheetClass = MyOffice.ExcelClass.NPOI_LoadToSheetClass(openFileDialog1.FileName);
-                this.textBox_Json.Text = sheetClass.JsonSerializationt(false);
+                string extension = System.IO.Path.GetExtension(openFileDialog1.FileName);
+                if(extension == ".txt")
+                {
+                    string json = MyFileStream.LoadFileAllText(openFileDialog1.FileName , "big5");
+                    List<SheetClass> sheetClasses = MyFileStream.LoadFileAllText(openFileDialog1.FileName).JsonDeserializet<List<SheetClass>>();
+                    byte[] excelData = sheetClasses.NPOI_GetBytes(Excel_Type.xlsx);
+                }
+                else
+                {
+                    MyOffice.ExcelClass.NPOI_LoadFile(openFileDialog1.FileName);
+                    sheetClass = MyOffice.ExcelClass.NPOI_LoadToSheetClass(openFileDialog1.FileName);
+                    this.textBox_Json.Text = sheetClass.JsonSerializationt(false);
+                }
+           
             }
         }
         private void Button_存檔Excel_Click(object sender, EventArgs e)

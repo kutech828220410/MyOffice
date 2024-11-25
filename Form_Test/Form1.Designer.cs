@@ -39,6 +39,7 @@
             this.saveFileDialog_SaveExcel = new System.Windows.Forms.SaveFileDialog();
             this.button_存檔Excel = new System.Windows.Forms.Button();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.button_Json解碼_new = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
@@ -70,7 +71,7 @@
             // 
             // button_Json解碼
             // 
-            this.button_Json解碼.Location = new System.Drawing.Point(1420, 888);
+            this.button_Json解碼.Location = new System.Drawing.Point(1420, 903);
             this.button_Json解碼.Name = "button_Json解碼";
             this.button_Json解碼.Size = new System.Drawing.Size(100, 134);
             this.button_Json解碼.TabIndex = 4;
@@ -124,11 +125,21 @@
             this.button_存檔Excel.Text = "存檔Excel";
             this.button_存檔Excel.UseVisualStyleBackColor = true;
             // 
+            // button_Json解碼_new
+            // 
+            this.button_Json解碼_new.Location = new System.Drawing.Point(628, 903);
+            this.button_Json解碼_new.Name = "button_Json解碼_new";
+            this.button_Json解碼_new.Size = new System.Drawing.Size(100, 134);
+            this.button_Json解碼_new.TabIndex = 11;
+            this.button_Json解碼_new.Text = "Json解碼 New";
+            this.button_Json解碼_new.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1751, 1061);
+            this.Controls.Add(this.button_Json解碼_new);
             this.Controls.Add(this.button_存檔Excel);
             this.Controls.Add(this.comboBox_ExcelType);
             this.Controls.Add(this.button_API_GET);
@@ -159,6 +170,7 @@
         private System.Windows.Forms.SaveFileDialog saveFileDialog_SaveExcel;
         private System.Windows.Forms.Button button_存檔Excel;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+        private System.Windows.Forms.Button button_Json解碼_new;
     }
 }
 

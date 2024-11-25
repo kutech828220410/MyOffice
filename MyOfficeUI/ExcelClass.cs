@@ -1377,7 +1377,7 @@ namespace MyOffice
                 sheetClass.Init(workbook);
 
 
-                NPOI.SS.UserModel.ISheet sheet = string.IsNullOrEmpty($"{sheetClass.Name}") ? workbook.CreateSheet($"Sheet{p}") : workbook.CreateSheet($"{sheetClass.Name}");
+                NPOI.SS.UserModel.ISheet sheet = string.IsNullOrEmpty($"{sheetClass.Name}") ? workbook.CreateSheet($"Sheet-{p}") : workbook.CreateSheet($"{sheetClass.Name}-{p}");
                 for (int i = 0; i < sheetClass.ColumnsWidth.Count; i++)
                 {
                     sheet.SetColumnWidth(i, sheetClass.ColumnsWidth[i]);
