@@ -1376,7 +1376,7 @@ namespace MyOffice
                 SheetClass sheetClass = sheetClasses[p];
                 sheetClass.Init(workbook);
 
-
+                sheetClass.Name = sheetClass.Name.Replace("*", "");
                 NPOI.SS.UserModel.ISheet sheet = string.IsNullOrEmpty($"{sheetClass.Name}") ? workbook.CreateSheet($"Sheet-{p}") : workbook.CreateSheet($"{sheetClass.Name}-{p}");
                 for (int i = 0; i < sheetClass.ColumnsWidth.Count; i++)
                 {
@@ -2327,9 +2327,9 @@ namespace MyOffice
                 Console.WriteLine($"讀檔耗時{myTimerBasic.ToString()}");
 
             }
-            catch
+            catch(Exception ex)
             {
-                Console.WriteLine($"NPOI_LoadHeader 檔案已開啟!無法讀取! , 位置 : {file}");
+                Console.WriteLine($"NPOI_LoadHeader 檔案已開啟!無法讀取! , 位置 : {file} , Exception : {ex.Message}");
                 return dataTables;
             }
             finally

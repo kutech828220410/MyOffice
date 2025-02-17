@@ -121,7 +121,6 @@ C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Release\System.Text.
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Release\System.Text.Json.xml
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Release\System.Threading.Tasks.Extensions.xml
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Release\System.ValueTuple.xml
-C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Release\Office.dll
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Release\Microsoft.Office.Interop.Excel.dll
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\bin\Release\Microsoft.Office.Interop.Word.dll
 C:\Users\Administrator\Source\Repos\MyOffice\MyOfficeUI\obj\Release\MyOffice.csproj.ResolveComReference.cache

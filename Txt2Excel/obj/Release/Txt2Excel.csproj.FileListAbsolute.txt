@@ -83,7 +83,6 @@ C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\HCGUI.dll
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\ICSharpCode.SharpZipLib.dll
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\System.Numerics.Vectors.dll
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\System.Buffers.dll
-C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\office.dll
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\TCP.dll
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\CallBackUI.dll
 C:\Users\Administrator\source\repos\MyOffice\Txt2Excel\bin\Release\AxOvkBase.dll

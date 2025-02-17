@@ -41,7 +41,7 @@ namespace Form_Test
             if(this.folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
                 path = this.folderBrowserDialog1.SelectedPath;
-                MyOffice.ExcelClass.NPOI_SaveFiles2Folder(@"C:\Users\Administrator\Desktop\屏榮20241025盤點\盤點表格-列印用OK.xlsx", path);
+                MyOffice.ExcelClass.NPOI_SaveFiles2Folder(@"C:\Users\Administrator\OneDrive - 鴻森智能科技有限公司\醫院客戶資料\B04.屏東榮民總醫院\2.其他文件\20250110盤點表\盤點表格-列印用OK.xlsx", path);
                 MessageBox.Show("完成!");
             }
           
@@ -75,12 +75,12 @@ namespace Form_Test
                 if(extension == ".txt")
                 {
                     string json = MyFileStream.LoadFileAllText(openFileDialog1.FileName , "big5");
-                    List<SheetClass> sheetClasses = MyFileStream.LoadFileAllText(openFileDialog1.FileName).JsonDeserializet<List<SheetClass>>();
+                    List<SheetClass> sheetClasses = json.JsonDeserializet<List<SheetClass>>();
                     byte[] excelData = sheetClasses.NPOI_GetBytes(Excel_Type.xlsx);
                 }
                 else
                 {
-                    MyOffice.ExcelClass.NPOI_LoadFile(openFileDialog1.FileName);
+                    MyOffice.ExcelClass.NPOI_LoadFile2DataTables(openFileDialog1.FileName);
                     sheetClass = MyOffice.ExcelClass.NPOI_LoadToSheetClass(openFileDialog1.FileName);
                     this.textBox_Json.Text = sheetClass.JsonSerializationt(false);
                 }
