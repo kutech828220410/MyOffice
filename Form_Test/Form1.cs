@@ -41,7 +41,7 @@ namespace Form_Test
             if(this.folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
                 path = this.folderBrowserDialog1.SelectedPath;
-                MyOffice.ExcelClass.NPOI_SaveFiles2Folder(@"C:\Users\Administrator\OneDrive - 鴻森智能科技有限公司\醫院客戶資料\B04.屏東榮民總醫院\2.其他文件\20250110盤點表\盤點表格-列印用OK.xlsx", path);
+                MyOffice.ExcelClass.NPOI_SaveFiles2Folder(@"C:\Users\Administrator\Desktop\20250411\盤點表.xls", path);
                 MessageBox.Show("完成!");
             }
           

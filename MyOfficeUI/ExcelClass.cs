@@ -395,7 +395,11 @@ namespace MyOffice
             Bitmap bitmap = new Bitmap(width, height);
             using (Bitmap bitmap_sheet = this.GetBitmap(0, Rows.Count, ref rectangle))
             {
+
                 Graphics g = Graphics.FromImage(bitmap);
+                g.SmoothingMode = SmoothingMode.HighQuality; //使繪圖質量最高，即消除鋸齒
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.CompositingQuality = CompositingQuality.HighQuality;
                 rectangle.Width = (int)(rectangle.Width * Scale);
                 rectangle.Height = (int)(rectangle.Height * Scale);
 
@@ -448,7 +452,7 @@ namespace MyOffice
             g.SmoothingMode = SmoothingMode.HighQuality; //使繪圖質量最高，即消除鋸齒
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.CompositingQuality = CompositingQuality.HighQuality;
-            g.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
+            //g.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
 
             if (Rowindex_start > Rows.Count) return null;
             if (Rowindex_end > Rows.Count) return null;
