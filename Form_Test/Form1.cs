@@ -58,7 +58,7 @@ namespace Form_Test
                 MessageBox.Show("解碼失敗!");
                 return;
             }
-            using (Bitmap bitmap = sheetClass.GetBitmap())
+            using (Bitmap bitmap = SheetClass.GetBitmapFromJson(this.textBox_Json.Text))
             {
                 using (Graphics g = panel1.CreateGraphics())
                 {
@@ -80,7 +80,6 @@ namespace Form_Test
                 }
                 else
                 {
-                    MyOffice.ExcelClass.NPOI_LoadFile2DataTables(openFileDialog1.FileName);
                     sheetClass = MyOffice.ExcelClass.NPOI_LoadToSheetClass(openFileDialog1.FileName);
                     this.textBox_Json.Text = sheetClass.JsonSerializationt(false);
                 }

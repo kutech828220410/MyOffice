@@ -55,23 +55,24 @@
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.White;
-            this.panel1.Location = new System.Drawing.Point(12, 12);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Left;
+            this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1370, 756);
+            this.panel1.Size = new System.Drawing.Size(1370, 1181);
             this.panel1.TabIndex = 2;
             // 
             // textBox_Json
             // 
-            this.textBox_Json.Location = new System.Drawing.Point(734, 774);
+            this.textBox_Json.Location = new System.Drawing.Point(1398, 194);
             this.textBox_Json.Multiline = true;
             this.textBox_Json.Name = "textBox_Json";
             this.textBox_Json.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBox_Json.Size = new System.Drawing.Size(680, 263);
+            this.textBox_Json.Size = new System.Drawing.Size(390, 501);
             this.textBox_Json.TabIndex = 3;
             // 
             // button_Json解碼
             // 
-            this.button_Json解碼.Location = new System.Drawing.Point(1420, 903);
+            this.button_Json解碼.Location = new System.Drawing.Point(1792, 408);
             this.button_Json解碼.Name = "button_Json解碼";
             this.button_Json解碼.Size = new System.Drawing.Size(100, 134);
             this.button_Json解碼.TabIndex = 4;
@@ -84,7 +85,7 @@
             // 
             // button_讀取Excel
             // 
-            this.button_讀取Excel.Location = new System.Drawing.Point(1420, 774);
+            this.button_讀取Excel.Location = new System.Drawing.Point(1792, 279);
             this.button_讀取Excel.Name = "button_讀取Excel";
             this.button_讀取Excel.Size = new System.Drawing.Size(100, 108);
             this.button_讀取Excel.TabIndex = 7;
@@ -93,7 +94,7 @@
             // 
             // button_API_GET
             // 
-            this.button_API_GET.Location = new System.Drawing.Point(81, 774);
+            this.button_API_GET.Location = new System.Drawing.Point(1792, 688);
             this.button_API_GET.Name = "button_API_GET";
             this.button_API_GET.Size = new System.Drawing.Size(100, 134);
             this.button_API_GET.TabIndex = 8;
@@ -106,7 +107,7 @@
             this.comboBox_ExcelType.Items.AddRange(new object[] {
             "xls",
             "xlsx"});
-            this.comboBox_ExcelType.Location = new System.Drawing.Point(1526, 888);
+            this.comboBox_ExcelType.Location = new System.Drawing.Point(1398, 718);
             this.comboBox_ExcelType.Name = "comboBox_ExcelType";
             this.comboBox_ExcelType.Size = new System.Drawing.Size(121, 20);
             this.comboBox_ExcelType.TabIndex = 9;
@@ -118,7 +119,7 @@
             // 
             // button_存檔Excel
             // 
-            this.button_存檔Excel.Location = new System.Drawing.Point(1420, 660);
+            this.button_存檔Excel.Location = new System.Drawing.Point(1792, 165);
             this.button_存檔Excel.Name = "button_存檔Excel";
             this.button_存檔Excel.Size = new System.Drawing.Size(100, 108);
             this.button_存檔Excel.TabIndex = 10;
@@ -127,7 +128,7 @@
             // 
             // button_Json解碼_new
             // 
-            this.button_Json解碼_new.Location = new System.Drawing.Point(628, 903);
+            this.button_Json解碼_new.Location = new System.Drawing.Point(1792, 548);
             this.button_Json解碼_new.Name = "button_Json解碼_new";
             this.button_Json解碼_new.Size = new System.Drawing.Size(100, 134);
             this.button_Json解碼_new.TabIndex = 11;
@@ -138,7 +139,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1751, 1061);
+            this.ClientSize = new System.Drawing.Size(1904, 1181);
             this.Controls.Add(this.button_Json解碼_new);
             this.Controls.Add(this.button_存檔Excel);
             this.Controls.Add(this.comboBox_ExcelType);

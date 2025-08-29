@@ -18,6 +18,7 @@ using Basic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.ComponentModel;
+using System.Globalization;
 
 namespace MyOffice
 {
@@ -93,8 +94,24 @@ namespace MyOffice
         xlsx,
     }
     [Serializable]
+    public class SheetPicture
+    {
+        public int RowStart { get; set; }
+        public int RowEnd { get; set; }
+        public int ColStart { get; set; }
+        public int ColEnd { get; set; }
+        public int Dx1 { get; set; }
+        public int Dy1 { get; set; }
+        public int Dx2 { get; set; }
+        public int Dy2 { get; set; }
+        public string PictureType { get; set; }
+        public string Base64 { get; set; }
+    }
+    [Serializable]
     public class SheetClass
     {
+        public List<SheetPicture> Pictures { get; set; } = new List<SheetPicture>();
+
         public SheetClass()
         {
 
@@ -453,6 +470,7 @@ namespace MyOffice
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.CompositingQuality = CompositingQuality.HighQuality;
             //g.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
+            g.PixelOffsetMode = PixelOffsetMode.Half;
 
             if (Rowindex_start > Rows.Count) return null;
             if (Rowindex_end > Rows.Count) return null;
@@ -794,7 +812,305 @@ namespace MyOffice
             }
         }
 
-     
+        public static Bitmap GetBitmapFromJson(string json)
+        {
+            var sheet = JsonSerializer.Deserialize<SheetClass>(json);
+            // --- 欄寬 / 列高換算 ---
+            // 可調整的常數
+            const double COL_WIDTH_BASE = 256.0;   // 欄寬基準
+            const double COL_WIDTH_SCALE = 8.0;    // 欄寬縮放比例 (原本 7 或 8)
+            const double ROW_HEIGHT_BASE = 15.0;   // 列高基準 (Excel 預設 row height)
+            const double ROW_HEIGHT_SCALE = 22.0;   // 列高基準 (Excel 預設 row height)
+            const double DPI_SCALE = 96.0 / 96;  // 點數轉像素 (固定)
+            double X_SCALE = 1 / COL_WIDTH_BASE * COL_WIDTH_SCALE* DPI_SCALE;
+            double Y_SCALE = 1 / ROW_HEIGHT_BASE * ROW_HEIGHT_SCALE * DPI_SCALE;
+
+            // 欄寬公式
+            int ColumnWidthToPx(int excelWidth)
+            {
+                return (int)Math.Truncate((excelWidth) * X_SCALE);
+            }
+
+            // 列高公式
+            int RowHeightToPx(int excelHeight)
+            {
+                return (int)(excelHeight * Y_SCALE);
+            }
+
+            // --- 計算總寬高 ---
+            int totalWidth = 0;
+            foreach (var w in sheet.ColumnsWidth)
+                totalWidth += ColumnWidthToPx(w);
+
+            int totalHeight = 0;
+            foreach (var row in sheet.Rows)
+                totalHeight += RowHeightToPx(row.Height);
+
+            Bitmap bmp = new Bitmap(totalWidth, totalHeight);
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.Clear(Color.White);
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                g.PixelOffsetMode = PixelOffsetMode.Half;
+                // --- 計算欄/列的座標 ---
+                int[] colX = new int[sheet.ColumnsWidth.Count + 1];
+                colX[0] = 0;
+                for (int i = 0; i < sheet.ColumnsWidth.Count; i++)
+                    colX[i + 1] = colX[i] + ColumnWidthToPx(sheet.ColumnsWidth[i]);
+
+                int[] rowY = new int[sheet.Rows.Count + 1];
+                rowY[0] = 0;
+                for (int i = 0; i < sheet.Rows.Count; i++)
+                    rowY[i + 1] = rowY[i] + RowHeightToPx(sheet.Rows[i].Height);
+
+
+                // 1️⃣ 畫背景 + 文字
+                foreach (var cell in sheet.CellValues)
+                {
+                    if (cell.Slave) continue;
+
+                    int x = colX[cell.ColStart];
+                    int y = rowY[cell.RowStart];
+                    int w = colX[cell.ColEnd + 1] - x;
+                    int h = rowY[cell.RowEnd + 1] - y;
+
+                    var style = sheet.MyCellStyles[cell.CellStyle_index];
+                    Rectangle rect = new Rectangle(x, y, w, h);
+
+                    // 背景色
+                    if (style.FillForegroundColor != 0)
+                    {
+                        Color bg = ((NPOI_Color)style.FillForegroundColor).ToColor();
+                        using (var brush = new SolidBrush(bg))
+                            g.FillRectangle(brush, rect);
+                    }
+
+                    string text = (cell.Text ?? "").Trim().TrimEnd('_');
+                    if (!string.IsNullOrEmpty(text))
+                    {
+                        using (Font font = new Font(style.FontName ?? "新細明體",
+                                                    style.FontHeightInPoints > 0 ? (float)style.FontHeightInPoints : 12f,
+                                                    style.IsBold ? FontStyle.Bold : FontStyle.Regular))
+                        {
+                            if (style.Alignment == HorizontalAlignment.Distributed)
+                            {
+                                // 水平分散對齊
+                                float totalTextWidth = 0;
+                                float[] charWidths = new float[text.Length];
+                                for (int i = 0; i < text.Length; i++)
+                                {
+                                    SizeF size = g.MeasureString(text[i].ToString(), font);
+                                    charWidths[i] = size.Width;
+                                    totalTextWidth += size.Width;
+                                }
+
+                                float spacing = 0;
+                                if (text.Length > 1)
+                                    spacing = (rect.Width - totalTextWidth) / (text.Length - 1);
+
+                                float textHeight = g.MeasureString(text, font).Height;
+                                float curY = rect.Top + (rect.Height - textHeight) / 2;
+
+                                float curX = rect.Left;
+                                for (int i = 0; i < text.Length; i++)
+                                {
+                                    g.DrawString(text[i].ToString(), font, Brushes.Black, curX, curY);
+                                    curX += charWidths[i] + spacing;
+                                }
+                            }
+                            else if (style.VerticalAlignment == VerticalAlignment.Distributed)
+                            {
+                                // 垂直分散對齊
+                                float charHeight = g.MeasureString("測", font).Height;
+                                float totalTextHeight = charHeight * text.Length;
+                                float spacing = 0;
+                                if (text.Length > 1)
+                                    spacing = (rect.Height - totalTextHeight) / (text.Length - 1);
+
+                                float curY = rect.Top;
+                                for (int i = 0; i < text.Length; i++)
+                                {
+                                    float charWidth = g.MeasureString(text[i].ToString(), font).Width;
+                                    float curX = rect.Left + (rect.Width - charWidth) / 2;
+                                    g.DrawString(text[i].ToString(), font, Brushes.Black, curX, curY);
+                                    curY += charHeight + spacing;
+                                }
+                            }
+                            else
+                            {
+                                // 一般對齊
+                                using (StringFormat sf = new StringFormat())
+                                {
+                                    switch (style.Alignment)
+                                    {
+                                        case HorizontalAlignment.Center: sf.Alignment = StringAlignment.Center; break;
+                                        case HorizontalAlignment.Right: sf.Alignment = StringAlignment.Far; break;
+                                        default: sf.Alignment = StringAlignment.Near; break;
+                                    }
+
+                                    switch (style.VerticalAlignment)
+                                    {
+                                        case VerticalAlignment.Top: sf.LineAlignment = StringAlignment.Near; break;
+                                        case VerticalAlignment.Bottom: sf.LineAlignment = StringAlignment.Far; break;
+                                        default: sf.LineAlignment = StringAlignment.Center; break;
+                                    }
+
+                                    g.DrawString(text, font, Brushes.Black, rect, sf);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 2️⃣ 繪製圖片 (完全模擬 Excel Anchor)
+                if (sheet.Pictures != null)
+                {
+                    foreach (var pic in sheet.Pictures)
+                    {
+                        try
+                        {
+                            byte[] imgBytes = Convert.FromBase64String(pic.Base64);
+                            using (var ms = new MemoryStream(imgBytes))
+                            using (var img = Image.FromStream(ms))
+                            {
+                                int x = colX[pic.ColStart];
+                                int y = rowY[pic.RowStart];
+                                int _x = colX[pic.ColEnd];
+                                int _y = rowY[pic.RowEnd];
+                                _x = (int)Math.Abs(((x - _x) * X_SCALE));
+                                _y = (int)Math.Abs(((y - _y) * Y_SCALE));
+
+                                int w = colX[pic.ColEnd + 1] - x;
+                                int h = rowY[pic.RowEnd + 1] - y;
+                                int w_ = pic.Dx2 - pic.Dx1;
+                                int h_ = pic.Dy2 - pic.Dy1;
+
+                                double image_width = Math.Abs(((pic.Dx2 - pic.Dx1) * X_SCALE) / 500);
+                                double image_height = Math.Abs(((pic.Dy2 - pic.Dy1) * Y_SCALE) / 500);
+
+                                double x1 = (pic.Dx1 / 9525 * 1)  + x;
+                                double y1 = (pic.Dy1 / 9525  * 1)  + y;
+
+
+
+                                Rectangle rect = new Rectangle((int)x1, (int)y1, (int)image_width, (int)image_width);
+
+                                if (rect.Width <= 0 || rect.Height <= 0) continue;
+
+                                g.DrawImage(img, rect); // 直接畫
+                            }
+                        }
+                        catch { /* 無效圖片就跳過 */ }
+                    }
+                    foreach (var pic in sheet.Pictures)
+                    {
+                        Console.WriteLine($"圖片 Anchor: " +
+                            $"RowStart={pic.RowStart}, ColStart={pic.ColStart}, Dx1={pic.Dx1}, Dy1={pic.Dy1}, " +
+                            $"RowEnd={pic.RowEnd}, ColEnd={pic.ColEnd}, Dx2={pic.Dx2}, Dy2={pic.Dy2}");
+                    }
+                }
+                // 3️⃣ 畫邊框
+                foreach (var cell in sheet.CellValues)
+                {
+                    if (cell.Slave) continue;
+
+                    int x = colX[cell.ColStart];
+                    int y = rowY[cell.RowStart];
+                    int w = colX[cell.ColEnd + 1] - x;
+                    int h = rowY[cell.RowEnd + 1] - y;
+
+                    var style = sheet.MyCellStyles[cell.CellStyle_index];
+                    Rectangle rect = new Rectangle(x, y, w, h);
+
+                    Action<BorderStyle, Point, Point> DrawBorder = (borderStyle, p1, p2) =>
+                    {
+                        if (borderStyle == BorderStyle.None) return;
+
+                        float width = 1f;
+                        switch (borderStyle)
+                        {
+                            case BorderStyle.Thin: width = 1f; break;
+                            case BorderStyle.Medium: width = 2f; break;
+                            case BorderStyle.Thick: width = 3f; break;
+                        }
+
+                        using (Pen pen = new Pen(Color.Black, width))
+                        {
+                            pen.Alignment = PenAlignment.Inset;
+                            g.DrawLine(pen, p1, p2);
+                        }
+                    };
+
+                    DrawBorder(style.BorderTop, new Point(rect.Left, rect.Top), new Point(rect.Right, rect.Top));
+                    DrawBorder(style.BorderBottom, new Point(rect.Left, rect.Bottom), new Point(rect.Right, rect.Bottom));
+                    DrawBorder(style.BorderLeft, new Point(rect.Left, rect.Top), new Point(rect.Left, rect.Bottom));
+                    DrawBorder(style.BorderRight, new Point(rect.Right, rect.Top), new Point(rect.Right, rect.Bottom));
+                }
+
+                // 4️⃣ 強制補外框
+                using (Pen outerPen = new Pen(Color.Black, 2))
+                {
+                    g.DrawRectangle(outerPen, 0, 0, totalWidth - 1, totalHeight - 1);
+                }
+            }
+
+            return bmp;
+        }
+        public static Rectangle AnchorToRectangle(
+          SheetPicture pic,
+          int[] colX,
+          int[] rowY,
+          List<int> columnsWidth,
+          List<SheetClass.Row> rows)
+        {
+            const double EMU_PER_PIXEL = 9525.0;
+
+            // 欄寬轉像素 (Excel → px)
+            int ColumnWidthToPx(int width)
+            {
+                if (width <= 0) return 0;
+                return (int)Math.Truncate((width * 7 + 5) / 256.0);
+            }
+
+            // 列高轉像素 (Excel → px)
+            int RowHeightToPx(int height)
+            {
+                if (height <= 0) return 0;
+                return (int)Math.Round(height / 20.0 * 96.0 / 72.0); // 96DPI
+            }
+
+            int x1, y1, x2, y2;
+
+            // 判斷模式：如果 Dx/Dy 數字很大 → 當作 EMU；否則 → 比例模式
+            bool isEMU = pic.Dx1 > 2000 || pic.Dx2 > 2000 || pic.Dy1 > 500 || pic.Dy2 > 500;
+
+            if (isEMU)
+            {
+                // --- EMU 模式 ---
+                x1 = colX[pic.ColStart] + (int)(pic.Dx1 / EMU_PER_PIXEL);
+                y1 = rowY[pic.RowStart] + (int)(pic.Dy1 / EMU_PER_PIXEL);
+                x2 = colX[pic.ColEnd] + (int)(pic.Dx2 / EMU_PER_PIXEL);
+                y2 = rowY[pic.RowEnd] + (int)(pic.Dy2 / EMU_PER_PIXEL);
+            }
+            else
+            {
+                // --- 比例模式 (0~1024, 0~256) ---
+                x1 = colX[pic.ColStart] +
+                     (int)(ColumnWidthToPx(columnsWidth[pic.ColStart]) * (pic.Dx1 / 1024.0));
+                y1 = rowY[pic.RowStart] +
+                     (int)(RowHeightToPx(rows[pic.RowStart].Height) * (pic.Dy1 / 256.0));
+
+                x2 = colX[pic.ColEnd] +
+                     (int)(ColumnWidthToPx(columnsWidth[pic.ColEnd]) * (pic.Dx2 / 1024.0));
+                y2 = rowY[pic.RowEnd] +
+                     (int)(RowHeightToPx(rows[pic.RowEnd].Height) * (pic.Dy2 / 256.0));
+            }
+
+            return new Rectangle(x1, y1, x2 - x1, y2 - y1);
+        }
+
+
 
     }
     [Serializable]
@@ -856,7 +1172,6 @@ namespace MyOffice
                 return (T)Enum.Parse(typeof(T), value, true);
             }
         }
-        
 
         private string text = "";
         private int rowStart = 0;
@@ -866,7 +1181,9 @@ namespace MyOffice
         private bool slave = false;
         private short height = 0;
         private bool isDouble = false;
-
+        private bool isNumeric = false;
+        private double numericValue = 0.0D;
+        
         private int cellStyle_index;
         public string Text { get => text; set => text = value; }
         public int RowStart { get => rowStart; set => rowStart = value; }
@@ -877,6 +1194,8 @@ namespace MyOffice
         public bool Slave { get => slave; set => slave = value; }
         public short Height { get => height; set => height = value; }
         public bool IsDouble { get => isDouble; set => isDouble = value; }
+        public double NumericValue { get => numericValue; set => numericValue = value; }
+        public bool IsNumeric { get => isNumeric; set => isNumeric = value; }
     }
    
     [Serializable]
@@ -903,6 +1222,8 @@ namespace MyOffice
         public short Boldweight { get; set; }
         public bool IsBold { get; set; }
         public short FillForegroundColor { get; set; }
+        public string DataFormatString { get; set; }   // ✅ 新增：數字格式
+
         public static MyCellStyle ToMyCellStyle(NPOI.SS.UserModel.IWorkbook workbook ,ICellStyle cellStyle)
         {
             MyCellStyle myCellStyle = new MyCellStyle();
@@ -914,7 +1235,7 @@ namespace MyOffice
             myCellStyle.BorderRight = cellStyle.BorderRight;
             myCellStyle.BorderLeft = cellStyle.BorderLeft;
             myCellStyle.FillForegroundColor = cellStyle.FillForegroundColor;
-     
+            myCellStyle.DataFormatString = cellStyle.GetDataFormatString(); // ✅ 抓取格式
 
             IFont font = cellStyle.GetFont(workbook);
             myCellStyle.FontName = font.FontName;
@@ -1714,6 +2035,42 @@ namespace MyOffice
                     
                 }         
             }
+            // 🔹 插入圖片
+            if (sheetClass.Pictures != null && sheetClass.Pictures.Count > 0)
+            {
+                var patriarch = sheet.CreateDrawingPatriarch();
+
+                foreach (var pic in sheetClass.Pictures)
+                {
+                    try
+                    {
+                        byte[] imgBytes = Convert.FromBase64String(pic.Base64);
+
+                        int pictureIdx = workbook.AddPicture(imgBytes, PictureType.PNG);
+
+                        IClientAnchor anchor;
+                        if (workbook is NPOI.XSSF.UserModel.XSSFWorkbook)
+                        {
+                            anchor = new NPOI.XSSF.UserModel.XSSFClientAnchor(
+                                pic.Dx1, pic.Dy1, pic.Dx2, pic.Dy2,
+                                pic.ColStart, pic.RowStart, pic.ColEnd, pic.RowEnd);
+                        }
+                        else
+                        {
+                            anchor = new NPOI.HSSF.UserModel.HSSFClientAnchor(
+                                pic.Dx1, pic.Dy1, pic.Dx2, pic.Dy2,
+                                pic.ColStart, pic.RowStart, pic.ColEnd, pic.RowEnd);
+                        }
+                        anchor.AnchorType = AnchorType.MoveAndResize;
+                        var picture = patriarch.CreatePicture(anchor, pictureIdx);
+                        // Excel 預設圖片比例會依照 anchor 自動縮放，這邊不用再手動調整
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"插入圖片失敗: {ex.Message}");
+                    }
+                }
+            }
             //转为字节数组  
             MemoryStream stream = new MemoryStream();
             workbook.Write(stream);
@@ -1745,108 +2102,25 @@ namespace MyOffice
             SheetClass sheetClass = NPOI_LoadSheetToJson(file).JsonDeserializet<SheetClass>();
             return sheetClass;
         }
+
         public static string NPOI_LoadSheetsToJson(this string file)
         {
-            Basic.MyTimerBasic myTimerBasic = new Basic.MyTimerBasic(100000);
-            myTimerBasic.StartTickTime();
-
-            string result = "";
-            NPOI.SS.UserModel.IWorkbook workbook;
-            string fileExt = Path.GetExtension(file).ToLower();
-            try
+            if (string.IsNullOrEmpty(file) || !File.Exists(file))
             {
-                FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read);
-                if (fileExt == ".xlsx") { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(fs); } else if (fileExt == ".xls") { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(fs); } else { workbook = null; }
-                if (workbook == null) { return null; }
-                List<SheetClass> sheetClasses = new List<SheetClass>();
-                for (int num = 0; num < workbook.NumberOfSheets; num++)
-                {
-                    NPOI.SS.UserModel.ISheet sheet = workbook.GetSheetAt(num);
-                    SheetClass sheetClass = new SheetClass(sheet.SheetName);
-                    List<ICell> cells = new List<ICell>();
-
-                    for (int r = 0; r <= sheet.LastRowNum; r++)
-                    {
-                        for (int c = 0; c < sheet.GetRow(r).LastCellNum; c++)
-                        {
-
-                            if (r == 0)
-                            {
-                                sheetClass.ColumnsWidth.Add(sheet.GetColumnWidth(c));
-                            }
-                            CellValue cellValue = new CellValue();
-                            ICell cell = sheet.GetRow(r).GetCell(c);
-
-                            object obj = NPOI_GetValueType(cell);
-                            if (cell == null || obj == null) continue;
-                            if (obj != null)
-                            {
-                                cellValue.Text = obj.ObjectToString();
-                            }
-                            cellValue.Height = cell.Row.Height;
-                            bool flag_IsMergedCell = cell.IsMergedCell;
-
-                            if (flag_IsMergedCell)
-                            {
-                                sheet.NPOI_IsMergeCell(r, c, ref cellValue);
-                            }
-                            else
-                            {
-                                cellValue.RowStart = r;
-                                cellValue.RowEnd = r;
-                                cellValue.ColStart = c;
-                                cellValue.ColEnd = c;
-                                cellValue.Slave = false;
-                            }
-                            CellValue cellValue_buf = sheetClass.SortCellValue(cellValue.RowStart, cellValue.RowEnd, cellValue.ColStart, cellValue.ColEnd);
-                            if (cellValue_buf == null && flag_IsMergedCell == true)
-                            {
-
-                                ICell cell_end = sheet.GetRow(cellValue.RowEnd).GetCell(cellValue.ColEnd);
-                                cell.CellStyle.BorderRight = cell_end.CellStyle.BorderRight;
-                                cell.CellStyle.BorderBottom = cell_end.CellStyle.BorderBottom;
-                                cellValue.Slave = false;
-                            }
-                            else if (cellValue_buf != null && flag_IsMergedCell == true)
-                            {
-                                cellValue.RowStart = r;
-                                cellValue.RowEnd = r;
-                                cellValue.ColStart = c;
-                                cellValue.ColEnd = c;
-                                cellValue.Slave = true;
-                            }
-
-
-                            MyCellStyle myCellStyle = MyCellStyle.ToMyCellStyle(workbook, cell.CellStyle);
-                            sheetClass.Add(cellValue, myCellStyle);
-
-                        }
-                    }
-                    sheetClasses.Add(sheetClass);
-
-                }
-                result = sheetClasses.JsonSerializationt(false);
-                //Console.WriteLine($"{result}");
-                fs.Close();
-                fs.Dispose();
-                workbook.Close();
-                Console.WriteLine($"讀檔耗時{myTimerBasic.ToString()}");
-
-            }
-            catch
-            {
-                Console.WriteLine($"NPOI_LoadHeader 檔案已開啟!無法讀取! , 位置 : {file}");
+                Console.WriteLine("檔案不存在!");
                 return "[]";
             }
-            finally
-            {
 
-            }
+            // 判斷副檔名
+            string fileExt = Path.GetExtension(file).ToLower();
 
+            // 讀取成 byte[]
+            byte[] bytes = File.ReadAllBytes(file);
 
-            return result;
-
+            // 呼叫原本的方法
+            return NPOI_LoadSheetsToJson(bytes, fileExt);
         }
+
         public static string NPOI_LoadSheetsToJson(byte[] bytes, string fileExt = ".xlsx")
         {
             Basic.MyTimerBasic myTimerBasic = new Basic.MyTimerBasic(100000);
@@ -1857,39 +2131,47 @@ namespace MyOffice
             try
             {
                 MemoryStream fs = new MemoryStream(bytes);
-                if (fileExt == ".xlsx") { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(fs); } else if (fileExt == ".xls") { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(fs); } else { workbook = null; }
+                if (fileExt == ".xlsx")
+                    workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(fs);
+                else if (fileExt == ".xls")
+                    workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(fs);
+                else
+                    workbook = null;
+
                 if (workbook == null) { return null; }
+
                 List<SheetClass> sheetClasses = new List<SheetClass>();
+
                 for (int num = 0; num < workbook.NumberOfSheets; num++)
                 {
                     NPOI.SS.UserModel.ISheet sheet = workbook.GetSheetAt(num);
                     SheetClass sheetClass = new SheetClass(sheet.SheetName);
                     List<ICell> cells = new List<ICell>();
 
+                    // 📒 Cell 內容
                     for (int r = 0; r <= sheet.LastRowNum; r++)
                     {
-                        for (int c = 0; c < sheet.GetRow(r).LastCellNum; c++)
-                        {
+                        var row = sheet.GetRow(r);
+                        if (row == null) continue; // 避免空列
 
+                        for (int c = 0; c < row.LastCellNum; c++)
+                        {
                             if (r == 0)
-                            {
                                 sheetClass.ColumnsWidth.Add(sheet.GetColumnWidth(c));
-                            }
+
                             CellValue cellValue = new CellValue();
-                            ICell cell = sheet.GetRow(r).GetCell(c);
+                            ICell cell = row.GetCell(c);
 
                             object obj = NPOI_GetValueType(cell);
                             if (obj != null)
-                            {
                                 cellValue.Text = obj.ObjectToString();
-                            }
+
+                            if (cell == null) continue;
                             cellValue.Height = cell.Row.Height;
                             bool flag_IsMergedCell = cell.IsMergedCell;
 
                             if (flag_IsMergedCell)
-                            {
                                 sheet.NPOI_IsMergeCell(r, c, ref cellValue);
-                            }
                             else
                             {
                                 cellValue.RowStart = r;
@@ -1898,16 +2180,16 @@ namespace MyOffice
                                 cellValue.ColEnd = c;
                                 cellValue.Slave = false;
                             }
-                            CellValue cellValue_buf = sheetClass.SortCellValue(cellValue.RowStart, cellValue.RowEnd, cellValue.ColStart, cellValue.ColEnd);
-                            if (cellValue_buf == null && flag_IsMergedCell == true)
-                            {
 
+                            CellValue cellValue_buf = sheetClass.SortCellValue(cellValue.RowStart, cellValue.RowEnd, cellValue.ColStart, cellValue.ColEnd);
+                            if (cellValue_buf == null && flag_IsMergedCell)
+                            {
                                 ICell cell_end = sheet.GetRow(cellValue.RowEnd).GetCell(cellValue.ColEnd);
                                 cell.CellStyle.BorderRight = cell_end.CellStyle.BorderRight;
                                 cell.CellStyle.BorderBottom = cell_end.CellStyle.BorderBottom;
                                 cellValue.Slave = false;
                             }
-                            else if (cellValue_buf != null && flag_IsMergedCell == true)
+                            else if (cellValue_buf != null && flag_IsMergedCell)
                             {
                                 cellValue.RowStart = r;
                                 cellValue.RowEnd = r;
@@ -1916,131 +2198,109 @@ namespace MyOffice
                                 cellValue.Slave = true;
                             }
 
-
                             MyCellStyle myCellStyle = MyCellStyle.ToMyCellStyle(workbook, cell.CellStyle);
                             sheetClass.Add(cellValue, myCellStyle);
-
                         }
                     }
-                    sheetClasses.Add(sheetClass);
 
+                    // 🖼️ 圖片處理
+                    if (fileExt == ".xlsx")
+                    {
+                        var drawing = sheet.CreateDrawingPatriarch() as NPOI.XSSF.UserModel.XSSFDrawing;
+                        if (drawing != null)
+                        {
+                            foreach (var shape in drawing.GetShapes())
+                            {
+                                if (shape is NPOI.XSSF.UserModel.XSSFPicture picture)
+                                {
+                                    var anchor = picture.GetPreferredSize(); // XSSFClientAnchor
+                                    var pdata = picture.PictureData;
+
+                                    SheetPicture sp = new SheetPicture
+                                    {
+                                        RowStart = anchor.Row1,
+                                        RowEnd = anchor.Row2,
+                                        ColStart = anchor.Col1,
+                                        ColEnd = anchor.Col2,
+                                        Dx1 = anchor.Dx1,
+                                        Dy1 = anchor.Dy1,
+                                        Dx2 = anchor.Dx2,
+                                        Dy2 = anchor.Dy2,
+                                        PictureType = pdata.PictureType.ToString(),
+                                        Base64 = Convert.ToBase64String(pdata.Data)
+                                    };
+
+                                    sheetClass.Pictures.Add(sp);
+                                }
+                            }
+                        }
+                    }
+                    else // .xls
+                    {
+                        var drawing = sheet.DrawingPatriarch as NPOI.HSSF.UserModel.HSSFPatriarch;
+                        if (drawing != null)
+                        {
+                            foreach (var shape in drawing.Children)
+                            {
+                                if (shape is NPOI.HSSF.UserModel.HSSFPicture picture)
+                                {
+                                    var anchor = (NPOI.HSSF.UserModel.HSSFClientAnchor)picture.Anchor;
+                                    var pdata = picture.PictureData;
+
+                                    SheetPicture sp = new SheetPicture
+                                    {
+                                        RowStart = anchor.Row1,
+                                        RowEnd = anchor.Row2,
+                                        ColStart = anchor.Col1,
+                                        ColEnd = anchor.Col2,
+                                        Dx1 = anchor.Dx1,
+                                        Dy1 = anchor.Dy1,
+                                        Dx2 = anchor.Dx2,
+                                        Dy2 = anchor.Dy2,
+                                        PictureType = pdata.PictureType.ToString(),
+                                        Base64 = Convert.ToBase64String(pdata.Data)
+                                    };
+                                    sheetClass.Pictures.Add(sp);
+                                }
+                            }
+                        }
+                    }
+
+                    sheetClasses.Add(sheetClass);
                 }
+
                 result = sheetClasses.JsonSerializationt(false);
-                //Console.WriteLine($"{result}");
+
                 fs.Close();
                 fs.Dispose();
                 workbook.Close();
-                Console.WriteLine($"讀檔耗時{myTimerBasic.ToString()}");
-
+                Console.WriteLine($"讀檔耗時 {myTimerBasic.ToString()}");
             }
             catch
             {
-                Console.WriteLine($"NPOI_LoadHeader 檔案已開啟!無法讀取!");
+                Console.WriteLine($"NPOI_LoadSheetsToJson 檔案已開啟!無法讀取!");
                 return "[]";
             }
-            finally
-            {
-
-            }
-
 
             return result;
-
         }
+
         public static string NPOI_LoadSheetToJson(this string file)
         {
-            Basic.MyTimerBasic myTimerBasic = new Basic.MyTimerBasic(100000);
-            myTimerBasic.StartTickTime();
-
-            string result = "";
-            NPOI.SS.UserModel.IWorkbook workbook;
-            string fileExt = Path.GetExtension(file).ToLower();
-            try
+            if (string.IsNullOrEmpty(file) || !File.Exists(file))
             {
-                FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read);
-                if (fileExt == ".xlsx") { workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(fs); } else if (fileExt == ".xls") { workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(fs); } else { workbook = null; }
-                if (workbook == null) { return null; }
-                NPOI.SS.UserModel.ISheet sheet = workbook.GetSheetAt(0);
-                
-                SheetClass sheetClass = new SheetClass(sheet.SheetName);
-                List<ICell> cells = new List<ICell>();
-                
-                for (int r = 0; r <= sheet.LastRowNum; r++)
-                {
-                    for (int c = 0; c < sheet.GetRow(r).LastCellNum; c++)
-                    {
-
-                        if (r == 0)
-                        {
-                            sheetClass.ColumnsWidth.Add(sheet.GetColumnWidth(c));
-                        }
-                        CellValue cellValue = new CellValue();
-                        ICell cell = sheet.GetRow(r).GetCell(c);
-                     
-                        object obj = NPOI_GetValueType(cell);
-                        if (obj != null)
-                        {
-                            cellValue.Text = obj.ObjectToString();
-                        }
-                        if (cell == null) continue;
-                        cellValue.Height = cell.Row.Height;
-                        bool flag_IsMergedCell = cell.IsMergedCell;
-
-                        if (flag_IsMergedCell)
-                        {
-                            sheet.NPOI_IsMergeCell(r, c, ref cellValue);
-                        }
-                        else
-                        {
-                            cellValue.RowStart = r;
-                            cellValue.RowEnd = r;
-                            cellValue.ColStart = c;
-                            cellValue.ColEnd = c;
-                            cellValue.Slave = false;
-                        }
-                        CellValue cellValue_buf = sheetClass.SortCellValue(cellValue.RowStart, cellValue.RowEnd, cellValue.ColStart, cellValue.ColEnd);
-                        if (cellValue_buf == null && flag_IsMergedCell == true)
-                        {
-
-                            ICell cell_end = sheet.GetRow(cellValue.RowEnd).GetCell(cellValue.ColEnd);
-                            cell.CellStyle.BorderRight = cell_end.CellStyle.BorderRight;
-                            cell.CellStyle.BorderBottom = cell_end.CellStyle.BorderBottom;
-                            cellValue.Slave = false;
-                        }
-                        else if (cellValue_buf != null && flag_IsMergedCell == true)
-                        {
-                            cellValue.RowStart = r;
-                            cellValue.RowEnd = r;
-                            cellValue.ColStart = c;
-                            cellValue.ColEnd = c;
-                            cellValue.Slave = true;
-                        }
-
-      
-                        MyCellStyle myCellStyle = MyCellStyle.ToMyCellStyle(workbook, cell.CellStyle);
-                        sheetClass.Add(cellValue, myCellStyle);
-
-                    }
-                }
-                result = sheetClass.JsonSerializationt(false);
-                //Console.WriteLine($"{result}");
-                fs.Close();
-                fs.Dispose();
-                workbook.Close();
-                Console.WriteLine($"讀檔耗時{myTimerBasic.ToString()}");
-            }
-            catch
-            {
-                Console.WriteLine($"NPOI_LoadHeader 檔案已開啟!無法讀取! , 位置 : {file}");
+                Console.WriteLine("檔案不存在!");
                 return "[]";
             }
-            finally
-            {
 
-            }
- 
-    
-            return result;
+            // 判斷副檔名
+            string fileExt = Path.GetExtension(file).ToLower();
+
+            // 讀取成 byte[]
+            byte[] bytes = File.ReadAllBytes(file);
+
+            // 呼叫原本的方法
+            return NPOI_LoadSheetToJson(bytes, fileExt);
         }
         public static string NPOI_LoadSheetToJson(byte[] bytes, string fileExt = ".xlsx")
         {
@@ -2061,12 +2321,49 @@ namespace MyOffice
 
                 for (int r = 0; r <= sheet.LastRowNum; r++)
                 {
+                    IRow _cells = sheet.GetRow(r);
+                    if (_cells == null)
+                    {
+                        // 建立一個虛擬空白列
+                        int lastColNum = sheet.GetRow(0)?.LastCellNum ?? 0; // 用第0列的欄位數來推測最大欄位數
+                        if (lastColNum == 0) lastColNum = sheet.GetRow(r - 1)?.LastCellNum ?? 0; // 如果第0列也沒東西，就抓上一列
+
+                        for (int c = 0; c < lastColNum; c++)
+                        {
+                            if (r == 0) sheetClass.ColumnsWidth.Add(sheet.GetColumnWidth(c));
+
+                            CellValue cellValue = new CellValue
+                            {
+                                Text = "",
+                                RowStart = r,
+                                RowEnd = r,
+                                ColStart = c,
+                                ColEnd = c,
+                                Slave = false,
+                                Height = 256 // 預設 row height，避免 0
+                            };
+
+                            // 建立一個預設 style
+                            MyCellStyle myCellStyle = new MyCellStyle
+                            {
+                                FontName = "Calibri",
+                                FontHeightInPoints = 11,
+                                Alignment = HorizontalAlignment.Left,
+                                VerticalAlignment = VerticalAlignment.Center
+                            };
+
+                            sheetClass.Add(cellValue, myCellStyle);
+                        }
+                        continue;
+                    }
                     for (int c = 0; c < sheet.GetRow(r).LastCellNum; c++)
                     {
 
                         if (r == 0)
                         {
-                            sheetClass.ColumnsWidth.Add(sheet.GetColumnWidth(c));
+                            int temp = sheet.GetColumnWidth(c);
+                            if (temp == 0) temp = 2560;
+                            sheetClass.ColumnsWidth.Add(temp);
                         }
                         CellValue cellValue = new CellValue();
                         ICell cell = sheet.GetRow(r).GetCell(c);
@@ -2074,7 +2371,46 @@ namespace MyOffice
                         object obj = NPOI_GetValueType(cell);
                         if (obj != null)
                         {
-                            cellValue.Text = obj.ObjectToString();
+                            if (cell.CellType == CellType.Numeric)
+                            {
+                                if (DateUtil.IsCellDateFormatted(cell))
+                                {
+                                    cellValue.Text = cell.DateCellValue.ToString("yyyy-MM-dd");
+                                    cellValue.IsNumeric = false;
+                                }
+                                else
+                                {
+                                    double num = cell.NumericCellValue;
+                                    cellValue.NumericValue = num;
+                                    cellValue.IsNumeric = true;
+
+                                    string fmt = cell.CellStyle.GetDataFormatString();
+                                    if (!string.IsNullOrEmpty(fmt) && !fmt.Equals("General", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        try
+                                        {
+                                            cellValue.Text = num.ToString(fmt, CultureInfo.InvariantCulture);
+                                        }
+                                        catch
+                                        {
+                                            cellValue.Text = num.ToString("0.##", CultureInfo.InvariantCulture);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // General 格式 → 不補小數
+                                        if (Math.Abs(num % 1) < 0.00001)
+                                            cellValue.Text = ((int)num).ToString();
+                                        else
+                                            cellValue.Text = num.ToString("0.##", CultureInfo.InvariantCulture);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                cellValue.Text = obj.ToString();
+                                cellValue.IsNumeric = false;
+                            }
                         }
                         if (cell == null) continue;
                         cellValue.Height = cell.Row.Height;
@@ -2091,14 +2427,15 @@ namespace MyOffice
                             cellValue.ColStart = c;
                             cellValue.ColEnd = c;
                             cellValue.Slave = false;
+                
                         }
                         CellValue cellValue_buf = sheetClass.SortCellValue(cellValue.RowStart, cellValue.RowEnd, cellValue.ColStart, cellValue.ColEnd);
+                    
                         if (cellValue_buf == null && flag_IsMergedCell == true)
                         {
-
                             ICell cell_end = sheet.GetRow(cellValue.RowEnd).GetCell(cellValue.ColEnd);
-                            cell.CellStyle.BorderRight = cell_end.CellStyle.BorderRight;
-                            cell.CellStyle.BorderBottom = cell_end.CellStyle.BorderBottom;
+                            //cell.CellStyle.BorderRight = cell_end.CellStyle.BorderRight;
+                            //cell.CellStyle.BorderBottom = cell_end.CellStyle.BorderBottom;
                             cellValue.Slave = false;
                         }
                         else if (cellValue_buf != null && flag_IsMergedCell == true)
@@ -2115,6 +2452,69 @@ namespace MyOffice
                         sheetClass.Add(cellValue, myCellStyle);
 
                     }
+                }
+                if (fileExt == ".xlsx")
+                {
+                    var drawing = sheet.CreateDrawingPatriarch() as NPOI.XSSF.UserModel.XSSFDrawing;
+
+                    if (drawing != null)
+                    {
+                        foreach (var shape in drawing.GetShapes())
+                        {
+                            if (shape is NPOI.XSSF.UserModel.XSSFPicture picture)
+                            {
+                                var anchor = picture.GetPreferredSize(); // 取得位置
+                                var pdata = picture.PictureData;
+                                SheetPicture sp = new SheetPicture
+                                {
+                                    RowStart = anchor.Row1,
+                                    RowEnd = anchor.Row2,
+                                    ColStart = anchor.Col1,
+                                    ColEnd = anchor.Col2,
+                                    Dx1 = anchor.Dx1,
+                                    Dy1 = anchor.Dy1,
+                                    Dx2 = anchor.Dx2,
+                                    Dy2 = anchor.Dy2,
+                                    PictureType = pdata.PictureType.ToString(),
+                                    Base64 = Convert.ToBase64String(pdata.Data)
+                                };
+                                sheetClass.Pictures.Add(sp);
+                            }
+                        }
+                    }
+
+                }
+                else
+                {
+                    var drawing = sheet.DrawingPatriarch as NPOI.HSSF.UserModel.HSSFPatriarch;
+
+                    if (drawing != null)
+                    {
+                        foreach (var shape in drawing.Children)
+                        {
+                            if (shape is NPOI.HSSF.UserModel.HSSFPicture picture)
+                            {
+                                var anchor = (NPOI.HSSF.UserModel.HSSFClientAnchor)picture.Anchor;
+                                var pdata = picture.PictureData;
+
+                                SheetPicture sp = new SheetPicture
+                                {
+                                    RowStart = anchor.Row1,
+                                    RowEnd = anchor.Row2,
+                                    ColStart = anchor.Col1,
+                                    ColEnd = anchor.Col2,
+                                    Dx1 = anchor.Dx1,
+                                    Dy1 = anchor.Dy1,
+                                    Dx2 = anchor.Dx2,
+                                    Dy2 = anchor.Dy2,
+                                    PictureType = pdata.PictureType.ToString(),
+                                    Base64 = Convert.ToBase64String(pdata.Data)
+                                };
+                                sheetClass.Pictures.Add(sp);
+                            }
+                        }
+                    }
+
                 }
                 result = sheetClass.JsonSerializationt(false);
                 //Console.WriteLine($"{result}");
