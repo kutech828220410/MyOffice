@@ -11,6 +11,7 @@ using PdfSharp.Fonts;
 using System.Collections.Generic;
 using PdfSharp;
 using System.Linq;
+using System.Drawing;
 
 public static class SheetClassPdfExporter
 {
@@ -243,19 +244,22 @@ public static class SheetClassPdfExporter
 
                 XStringFormat format = new XStringFormat();
 
+                bool flag_Distributed = false;
                 // --- 水平對齊 ---
                 switch (style.Alignment)
                 {
                     case HorizontalAlignment.Center:
                         format.Alignment = XStringAlignment.Center;
                         break;
-
                     case HorizontalAlignment.Right:
-                        format.Alignment = XStringAlignment.Far;
+                        format.Alignment = XStringAlignment.Far;         
                         // ✅ 保留右邊留白
                         rect = new XRect(rect.X, rect.Y, rect.Width - padX, rect.Height);
                         break;
-
+                    case HorizontalAlignment.Distributed: // ✅ 水平分散對齊
+                        DrawDistributedTextHorizontal(g, text, font, XBrushes.Black, rect);
+                        flag_Distributed = true;
+                        break;
                     default: // Left
                         format.Alignment = XStringAlignment.Near;
                         // ✅ 保留左邊留白
@@ -274,12 +278,19 @@ public static class SheetClassPdfExporter
                         format.LineAlignment = XLineAlignment.Far;
                         rect = new XRect(rect.X, rect.Y, rect.Width, rect.Height - padY);
                         break;
+                    case VerticalAlignment.Distributed: // ✅ 垂直分散對齊
+                        DrawDistributedTextVertical(g, text, font, XBrushes.Black, rect);
+                        flag_Distributed = true;
+                        break;
                     default: // Middle
-                        format.LineAlignment = XLineAlignment.Center;
+                        format.LineAlignment = XLineAlignment.Center;        
                         break;
                 }
-
-                g.DrawString(text, font, XBrushes.Black, rect, format);
+                if(flag_Distributed == false)
+                {
+                    g.DrawString(text, font, XBrushes.Black, rect, format);
+                }
+         
             }
         }
 
@@ -356,7 +367,76 @@ public static class SheetClassPdfExporter
                            new XPoint(x2, y1), new XPoint(x2, y2));
         }
     }
+    /// <summary>
+    /// 在矩形範圍內，繪製「水平分散對齊」文字
+    /// </summary>
+    public static void DrawDistributedTextHorizontal(XGraphics g, string text, XFont font, XBrush brush, XRect rect)
+    {
+        if (string.IsNullOrEmpty(text)) return;
 
+        // 逐字量測寬度
+        double totalTextWidth = 0;
+        double[] charWidths = new double[text.Length];
+        XSize size;
+        for (int i = 0; i < text.Length; i++)
+        {
+            size = g.MeasureString(text[i].ToString(), font);
+            charWidths[i] = size.Width;
+            totalTextWidth += size.Width;
+        }
+        size = g.MeasureString("測".ToString(), font);
+        totalTextWidth += size.Width;
+        // 計算間距
+        double spacing = 0;
+        if (text.Length > 1)
+            spacing = (rect.Width - totalTextWidth) / (text.Length - 1);
+
+        // 計算基準 Y (垂直置中)
+        double textHeight = g.MeasureString(text, font).Height;
+        double curY = rect.Top + (rect.Height - textHeight) / 2;
+
+        // 從左開始繪製
+        double curX = rect.Left;
+        curX += size.Width;
+        for (int i = 0; i < text.Length; i++)
+        {
+            string text_ = text[i].ToString();
+            g.DrawString(text_.ToString(), font, brush, new XPoint(curX, curY + textHeight / 2), XStringFormats.Center);
+            curX += charWidths[i] + spacing;
+        }
+    }
+    /// <summary>
+    /// 在矩形範圍內，繪製「垂直分散對齊」文字（多行平均分布）
+    /// </summary>
+    public static void DrawDistributedTextVertical(XGraphics g, string text, XFont font, XBrush brush, XRect rect)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+
+        // 切行 (Excel 通常以換行符號分行)
+        string[] lines = text.Split(new[] { '\n' }, StringSplitOptions.None);
+
+        if (lines.Length == 1)
+        {
+            // 單行 → 視為置中
+            g.DrawString(text, font, brush, rect, XStringFormats.Center);
+            return;
+        }
+
+        // 計算行高
+        double lineHeight = g.MeasureString("測", font).Height; // 用字體實際高度
+        double spacing = (rect.Height - lineHeight) / (lines.Length - 1);
+
+        // 基準 X (水平置中)
+        double baseX = rect.Left + rect.Width / 2;
+
+        // 繪製每行
+        for (int i = 0; i < lines.Length; i++)
+        {
+            double y = rect.Top + i * spacing + lineHeight / 2;
+            g.DrawString(lines[i], font, brush,
+                new XPoint(baseX, y), XStringFormats.Center);
+        }
+    }
 
 
 
