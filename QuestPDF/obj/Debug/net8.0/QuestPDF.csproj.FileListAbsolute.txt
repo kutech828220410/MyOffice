@@ -1,0 +1,15 @@
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\bin\Debug\net8.0\QuestPDF.exe
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\bin\Debug\net8.0\QuestPDF.deps.json
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\bin\Debug\net8.0\QuestPDF.runtimeconfig.json
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\bin\Debug\net8.0\QuestPDF.dll
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\bin\Debug\net8.0\QuestPDF.pdb
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\obj\Debug\net8.0\QuestPDF.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\obj\Debug\net8.0\QuestPDF.AssemblyInfoInputs.cache
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\obj\Debug\net8.0\QuestPDF.AssemblyInfo.cs
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\obj\Debug\net8.0\QuestPDF.csproj.CoreCompileInputs.cache
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\obj\Debug\net8.0\QuestPDF.sourcelink.json
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\obj\Debug\net8.0\QuestPDF.dll
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\obj\Debug\net8.0\refint\QuestPDF.dll
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\obj\Debug\net8.0\QuestPDF.pdb
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\obj\Debug\net8.0\QuestPDF.genruntimeconfig.cache
+C:\Users\Evan\source\repos\MyOffice\QuestPDF\obj\Debug\net8.0\ref\QuestPDF.dll

@@ -53,7 +53,8 @@ namespace Form_Test
         private void Button_Json解碼_Click(object sender, EventArgs e)
         {
             SheetClass sheetClass = this.textBox_Json.Text.JsonDeserializet<SheetClass>();
-            if(sheetClass == null)
+            sheetClass.SaveToPDF(@"C:\Users\Evan\Desktop\採購單_pdfsharp.pdf", PdfSharp.PageSize.A5, PdfSharp.PageOrientation.Landscape, 10);
+            if (sheetClass == null)
             {
                 MessageBox.Show("解碼失敗!");
                 return;
