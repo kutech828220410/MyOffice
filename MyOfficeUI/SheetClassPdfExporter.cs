@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using PdfSharp;
 using System.Linq;
 using System.Drawing;
+using System.Reflection;
 
 public static class SheetClassPdfExporter
 {
@@ -462,24 +463,23 @@ public static class SheetClassPdfExporter
     public class CustomFontResolver : IFontResolver
     {
         private readonly Dictionary<string, string> _fontMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            // ✅ 修改成你拆出來的 TTF 檔案路徑
-            { "標楷體", @"C:\Windows\Fonts\kaiu.ttf" },
-            { "新細明體", @"C:\Windows\Fonts\ttf_export\mingliu_0.ttf" },
-            { "微軟正黑體", @"C:\Windows\Fonts\ttf_export\msjh_0.ttf" }
-        };
+    {
+        { "標楷體", "kaiu.ttf" },
+        { "新細明體", "mingliu_0.ttf" },
+        { "微軟正黑體", "msjh_0.ttf" }
+    };
 
         public string DefaultFontName => "標楷體"; // 預設字型
 
         public byte[] GetFont(string faceName)
         {
-            if (_fontMapping.TryGetValue(faceName, out string path) && File.Exists(path))
+            if (_fontMapping.TryGetValue(faceName, out string resourceFile))
             {
-                return File.ReadAllBytes(path);
+                return LoadFontFromResource(resourceFile);
             }
 
             Console.WriteLine($"⚠ 找不到字型: {faceName}，改用 {DefaultFontName}");
-            return File.ReadAllBytes(_fontMapping[DefaultFontName]);
+            return LoadFontFromResource(_fontMapping[DefaultFontName]);
         }
 
         public FontResolverInfo ResolveTypeface(string familyName, bool isBold, bool isItalic)
@@ -491,6 +491,24 @@ public static class SheetClassPdfExporter
 
             // fallback
             return new FontResolverInfo(DefaultFontName);
+        }
+
+        private static byte[] LoadFontFromResource(string fileName)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            // 取得所有資源名稱，找結尾相符的
+            string resourcePath = assembly.GetManifestResourceNames()
+                .FirstOrDefault(r => r.EndsWith(fileName, StringComparison.OrdinalIgnoreCase));
+
+            if (resourcePath == null)
+                throw new FileNotFoundException($"找不到內嵌字型資源: {fileName}");
+
+            using (Stream stream = assembly.GetManifestResourceStream(resourcePath))
+            using (MemoryStream ms = new MemoryStream())
+            {
+                stream.CopyTo(ms);
+                return ms.ToArray();
+            }
         }
     }
 }
